@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#05060a" />
+    <title>EchoVault · music visualizer & spectral vault</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>%F0%9F%94%8A</text></svg>" />
+  </head>
+  <body>
+    <div id="app">
+      <main id="stage">
+        <canvas id="viz"></canvas>
+
+        <!-- Live readouts overlaid on the canvas -->
+        <div id="overlay" class="overlay">
+          <div class="brand">
+            <span class="brand-mark">🔊</span>
+            <span class="brand-name">EchoVault</span>
+          </div>
+          <div id="readouts" class="readouts" hidden>
+            <div class="meter"><label>Loudness</label><div class="bar"><i data-meter="loudness"></i></div></div>
+            <div class="meter"><label>Brightness</label><div class="bar"><i data-meter="brightness"></i></div></div>
+            <div class="meter bass"><label>Bass</label><div class="bar"><i data-meter="bass"></i></div></div>
+            <div class="meter mid"><label>Mid</label><div class="bar"><i data-meter="mid"></i></div></div>
+            <div class="meter treble"><label>Treble</label><div class="bar"><i data-meter="treble"></i></div></div>
+          </div>
+        </div>
+
+        <!-- Idle / "press play" hint -->
+        <div id="hint" class="hint">
+          <h1>EchoVault</h1>
+          <p>A music visualizer &amp; spectral vault. Load a track or use your mic to begin.</p>
+          <div class="hint-actions">
+            <button class="btn primary" data-action="pick-file">Open audio file</button>
+            <button class="btn" data-action="use-mic">Use microphone</button>
+          </div>
+        </div>
+      </main>
+
+      <aside id="panel">
+        <section class="source">
+          <h2>Source</h2>
+          <div class="row">
+            <button class="btn" data-action="pick-file">📁 File</button>
+            <button class="btn" data-action="use-mic">🎤 Mic</button>
+          </div>
+          <input id="file-input" type="file" accept="audio/*" hidden />
+          <div id="transport" class="transport" hidden>
+            <button class="btn icon" data-action="playpause" title="Play / pause">▶</button>
+            <input id="seek" class="seek" type="range" min="0" max="1000" value="0" />
+            <span id="time" class="time">0:00</span>
+          </div>
+          <p id="source-name" class="muted small"></p>
+        </section>
+
+        <section class="modes">
+          <h2>Visual mode</h2>
+          <div id="mode-buttons" class="mode-grid"></div>
+        </section>
+
+        <section class="record">
+          <h2>Vault</h2>
+          <p class="muted small">Record a compact spectral fingerprint of what's playing for future analysis.</p>
+          <div class="now-playing">
+            <input id="np-title" type="text" placeholder="Track title (optional)" />
+            <input id="np-artist" type="text" placeholder="Artist (optional)" />
+          </div>
+          <button id="record-btn" class="btn record" data-action="record">
+            <span class="rec-dot"></span><span class="rec-label">Record</span>
+            <span id="rec-timer" class="rec-timer" hidden>0:00</span>
+          </button>
+        </section>
+
+        <section class="history">
+          <div class="history-head">
+            <h2>History</h2>
+            <button class="btn tiny ghost" data-action="export-all" title="Export all sessions as JSON">Export</button>
+          </div>
+          <div id="history-list" class="history-list"></div>
+        </section>
+      </aside>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
