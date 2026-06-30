@@ -1,0 +1,87 @@
+# 🔊 EchoVault
+
+A music visualizer and **media multi-analyzer** that does two things most
+visualizers don't bother with:
+
+1. **Shows** a live, multiband representation of whatever is playing — a real
+   FFT equalizer plus several fun abstract modes (spectrum bars, radial burst,
+   reactive particle field, scrolling spectrogram, oscilloscope).
+2. **Remembers** it. Every session can be recorded into a local *vault* as a
+   compact spectral fingerprint (a downsampled spectrogram thumbnail + summary
+   statistics), so you can build a queryable history of how the things you
+   listen to actually *sound* over time.
+
+The visualizer is the eye-candy. The **vault is the point** — it turns ephemeral
+spectrum eye-candy into a personal "music DNA log."
+
+## Quick start
+
+```bash
+npm install
+npm run dev      # open the printed localhost URL
+```
+
+Then either **Open an audio file** or **Use microphone**, pick a visual mode,
+and hit **Record** to save a fingerprint to your vault.
+
+```bash
+npm run build    # production build to dist/
+npm run preview  # preview the production build
+```
+
+## How it works
+
+| Concern | Implementation |
+|---|---|
+| Audio access | Web Audio API. `<audio>` + `MediaElementSource` for files, `getUserMedia` + `MediaStreamSource` for mic. |
+| Analysis | `AnalyserNode` FFT → byte frequency data, reduced to log-spaced bands + spectral features (loudness, centroid/brightness, bass/mid/treble energy, dynamic range). |
+| Visuals | Plain Canvas 2D. Each mode is a self-contained renderer in `src/visualizers/`. |
+| The vault | Recorded sessions are stored in **IndexedDB** as a flat `Uint8Array` spectrogram (64 bins × up to ~720 columns) plus aggregate stats. Compact by design — no raw PCM, no per-frame bloat. |
+
+### Why not just read Spotify's spectrum?
+
+You can't. Spotify (and Apple Music, YouTube Music, etc.) never expose the raw
+PCM stream — it's DRM-protected — and Spotify
+[deprecated its `audio-analysis` / `audio-features` endpoints in Nov 2024](https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api)
+for apps without prior access. So the only honest ways to get real spectrum data
+are **local files** or the **microphone**, both of which EchoVault supports.
+
+Streaming services can still tell you *what* is playing (metadata). The roadmap
+below pairs that with the spectrum EchoVault captures itself.
+
+## Architecture
+
+```
+src/
+  main.js                 app bootstrap, render loop, UI wiring
+  style.css               dark UI theme
+  audio/
+    AudioEngine.js        AudioContext + AnalyserNode, file/mic sources
+    features.js           spectral feature extraction
+  visualizers/
+    index.js              mode registry
+    bars.js  radial.js  particles.js  spectrogram.js  oscilloscope.js
+  vault/
+    Recorder.js           accumulates a session into a compact fingerprint
+    fingerprint.js        log-spaced band mapping + downsampling
+    store.js              IndexedDB persistence
+  ui/
+    history.js            renders the vault, thumbnails, edit/delete/export
+  utils/
+    colors.js             heatmap palette helpers
+```
+
+## Roadmap
+
+- **Now-playing pairing** — auto-label each recorded fingerprint with the track
+  reported by Spotify/Last.fm so the vault knows *what* it captured, not just
+  *how it sounded*.
+- **System / loopback capture** on desktop (capture the OS audio bus instead of
+  the mic) for clean, hands-off recording of streamed audio.
+- **Vault analytics** — trends over time: how the brightness / dynamic range /
+  bass balance of your listening shifts week to week.
+- **Capacitor wrapper** for Android/iOS.
+
+## License
+
+MIT

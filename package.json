@@ -1,0 +1,15 @@
+{
+  "name": "echovault",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A music visualizer and media multi-analyzer that records a compact spectral history of what you listen to.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}
