@@ -46,8 +46,32 @@ PCM stream — it's DRM-protected — and Spotify
 for apps without prior access. So the only honest ways to get real spectrum data
 are **local files** or the **microphone**, both of which EchoVault supports.
 
-Streaming services can still tell you *what* is playing (metadata). The roadmap
-below pairs that with the spectrum EchoVault captures itself.
+Streaming services can still tell you *what* is playing (metadata), and
+EchoVault now pairs that with the spectrum it captures itself — see below.
+
+## Spotify pairing (optional)
+
+Connect a Spotify account to:
+
+- **Auto-label recordings** with the track that's currently playing, and
+- Browse your **recently-played history** (last ~20 tracks) and tag a recording
+  with any of them.
+
+This uses the Authorization Code + **PKCE** flow — entirely client-side, no
+server and no client secret. Spotify's `currently-playing` and
+`recently-played` endpoints are *not* among the deprecated ones.
+
+> ⚠️ **Metadata only.** Spotify never exposes the audio, so history/now-playing
+> give you the *name* of a track, not its sound. A recording only gets a real
+> spectral fingerprint when EchoVault actually hears the audio (file or mic);
+> Spotify just supplies the label.
+
+**Setup:** create an app at the
+[Spotify dashboard](https://developer.spotify.com/dashboard), add your EchoVault
+URL as a Redirect URI (use `http://127.0.0.1:5173/` for local dev — Spotify
+requires `127.0.0.1`, not `localhost`, for http), then either set
+`VITE_SPOTIFY_CLIENT_ID` (see `.env.example`) or paste the Client ID into the
+app's **Set up Spotify** prompt (stored only in your browser).
 
 ## Architecture
 
@@ -65,6 +89,8 @@ src/
     Recorder.js           accumulates a session into a compact fingerprint
     fingerprint.js        log-spaced band mapping + downsampling
     store.js              IndexedDB persistence
+  integrations/
+    spotify.js            PKCE OAuth + currently-playing / recently-played
   ui/
     history.js            renders the vault, thumbnails, edit/delete/export
   utils/
@@ -73,11 +99,11 @@ src/
 
 ## Roadmap
 
-- **Now-playing pairing** — auto-label each recorded fingerprint with the track
-  reported by Spotify/Last.fm so the vault knows *what* it captured, not just
-  *how it sounded*.
+- ✅ **Now-playing pairing** — auto-label each recorded fingerprint with the
+  track Spotify reports, plus a recently-played history list. *(done)*
 - **System / loopback capture** on desktop (capture the OS audio bus instead of
   the mic) for clean, hands-off recording of streamed audio.
+- **Last.fm / Apple Music** as alternative metadata sources.
 - **Vault analytics** — trends over time: how the brightness / dynamic range /
   bass balance of your listening shifts week to week.
 - **Capacitor wrapper** for Android/iOS.

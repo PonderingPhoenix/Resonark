@@ -91,6 +91,11 @@ function card(session, onChange) {
     statChip('Dyn', Math.round(s.dynamicRange || 0)),
     statChip('Dom', session.dominant || '—'),
   )
+  if (session.label?.spotify) {
+    const sp = statChip('♪', 'Spotify')
+    sp.classList.add('spotify-chip')
+    chips.append(sp)
+  }
 
   const actions = document.createElement('div')
   actions.className = 'card-actions'

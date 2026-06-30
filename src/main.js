@@ -6,14 +6,22 @@ import { Recorder } from './vault/Recorder.js'
 import { saveSession } from './vault/store.js'
 import { visualizers, getVisualizer } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
+import { SpotifyClient } from './integrations/spotify.js'
 
 const VIZ_BANDS = 96 // bands used for display (the vault stores 64 separately)
 
 const engine = new AudioEngine({ fftSize: 2048, smoothing: 0.82 })
 const recorder = new Recorder(engine)
+const spotify = new SpotifyClient()
 
 let activeViz = visualizers[0]
 let vizEdges = null
+
+// Spotify pairing state
+let currentTrack = null      // last-seen currently-playing track (from polling)
+let pendingLabelTrack = null // a track the user clicked in "Recently played"
+let recordingTrack = null    // track snapshot captured when a recording started
+let pollTimer = null
 
 // ---- DOM refs ----
 const $ = (sel) => document.querySelector(sel)
@@ -37,6 +45,16 @@ const sourceName = $('#source-name')
 const recordBtn = $('#record-btn')
 const recTimer = $('#rec-timer')
 const historyList = $('#history-list')
+const connectBtn = $('[data-action="spotify-connect"]')
+const disconnectBtn = $('[data-action="spotify-disconnect"]')
+const autolabelWrap = $('#autolabel-wrap')
+const autolabelInput = $('#autolabel')
+const npNow = $('#np-now')
+const npCurrent = $('#np-current')
+const npTitle = $('#np-title')
+const npArtist = $('#np-artist')
+const recentSection = $('#recent-section')
+const recentList = $('#recent-list')
 
 // ---- Canvas sizing (device pixels for crisp rendering) ----
 function resize() {
@@ -142,20 +160,113 @@ async function startMic() {
   }
 }
 
+// ---- Spotify pairing ----
+function refreshSpotifyUi() {
+  const connected = spotify.isConnected()
+  connectBtn.textContent = spotify.isConfigured() ? 'Connect Spotify' : 'Set up Spotify'
+  connectBtn.hidden = connected
+  disconnectBtn.hidden = !connected
+  autolabelWrap.hidden = !connected
+  npNow.hidden = !connected
+  recentSection.hidden = !connected
+  if (connected) {
+    autolabelInput.checked = spotify.autoLabel
+    startSpotifyPolling()
+    renderRecent()
+  } else {
+    stopSpotifyPolling()
+  }
+}
+
+async function updateNowPlaying() {
+  if (!spotify.isConnected()) return
+  try {
+    const np = await spotify.getCurrentlyPlaying()
+    if (np && np.track) {
+      currentTrack = np.track
+      npCurrent.textContent = `${np.track.title} — ${np.track.artist}${np.isPlaying ? '' : ' (paused)'}`
+      npNow.classList.toggle('playing', np.isPlaying)
+    } else {
+      currentTrack = null
+      npCurrent.textContent = 'Nothing playing'
+      npNow.classList.remove('playing')
+    }
+  } catch { /* transient network/API error — keep last value */ }
+}
+
+function startSpotifyPolling() {
+  stopSpotifyPolling()
+  updateNowPlaying()
+  pollTimer = setInterval(() => { if (!document.hidden) updateNowPlaying() }, 5000)
+}
+
+function stopSpotifyPolling() {
+  if (pollTimer) clearInterval(pollTimer)
+  pollTimer = null
+}
+
+async function renderRecent() {
+  const tracks = await spotify.getRecentlyPlayed(20)
+  recentList.innerHTML = ''
+  if (!tracks.length) {
+    recentList.innerHTML = '<p class="muted small empty">No recent tracks.</p>'
+    return
+  }
+  for (const t of tracks) {
+    const row = document.createElement('button')
+    row.className = 'recent-item'
+    row.innerHTML = `<span class="recent-main">${escapeHtml(t.title)}</span>` +
+      `<span class="recent-sub">${escapeHtml(t.artist)} · ${formatAgo(t.playedAt)}</span>`
+    row.addEventListener('click', () => {
+      pendingLabelTrack = t
+      npTitle.value = t.title
+      npArtist.value = t.artist
+      recentList.querySelectorAll('.recent-item').forEach((x) => x.classList.remove('selected'))
+      row.classList.add('selected')
+    })
+    recentList.append(row)
+  }
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+}
+
+function formatAgo(iso) {
+  if (!iso) return ''
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.round(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  return `${Math.round(hrs / 24)}d ago`
+}
+
 // ---- Recording ----
 async function stopRecording() {
   recordBtn.classList.remove('recording')
   recTimer.hidden = true
   recordBtn.querySelector('.rec-label').textContent = 'Record'
 
+  // Prefer a manually-typed label; otherwise fall back to the captured track.
+  const t = recordingTrack
+  const manualTitle = npTitle.value.trim()
+  const manualArtist = npArtist.value.trim()
   const session = recorder.finish({
-    title: $('#np-title').value,
-    artist: $('#np-artist').value,
+    title: manualTitle || (t ? t.title : ''),
+    artist: manualArtist || (t ? t.artist : ''),
+    spotify: t ? { id: t.id, uri: t.uri, album: t.album, image: t.image } : undefined,
   })
+  recordingTrack = null
   if (session.spectrogramDims.cols > 0) {
     await saveSession(session)
     await renderHistory(historyList)
   }
+  // Reset label fields so they don't carry over to the next recording.
+  npTitle.value = ''
+  npArtist.value = ''
+  pendingLabelTrack = null
+  recentList.querySelectorAll('.recent-item.selected').forEach((x) => x.classList.remove('selected'))
 }
 
 function startRecording() {
@@ -163,6 +274,9 @@ function startRecording() {
     alert('Start an audio source first (file or mic).')
     return
   }
+  // Snapshot the track to attach: an explicitly-clicked recent track wins,
+  // else the currently-playing track if auto-label is on.
+  recordingTrack = pendingLabelTrack || (autolabelInput.checked ? currentTrack : null)
   recorder.start()
   recordBtn.classList.add('recording')
   recTimer.hidden = false
@@ -198,8 +312,41 @@ document.addEventListener('click', (e) => {
     case 'export-all':
       exportAll()
       break
+    case 'spotify-connect':
+      connectSpotify()
+      break
+    case 'spotify-disconnect':
+      spotify.disconnect()
+      currentTrack = null
+      refreshSpotifyUi()
+      break
+    case 'spotify-refresh':
+      updateNowPlaying()
+      break
+    case 'spotify-recent-refresh':
+      renderRecent()
+      break
   }
 })
+
+async function connectSpotify() {
+  if (!spotify.isConfigured()) {
+    const id = prompt(
+      'Enter your Spotify app Client ID.\n\n' +
+      'Create an app at https://developer.spotify.com/dashboard, add this page\'s URL ' +
+      'as a Redirect URI, and paste the Client ID here. It is stored only in this browser.',
+    )
+    if (!id) return
+    spotify.setClientId(id)
+  }
+  try {
+    await spotify.connect() // redirects away
+  } catch (err) {
+    alert(err.message)
+  }
+}
+
+autolabelInput.addEventListener('change', () => { spotify.autoLabel = autolabelInput.checked })
 
 fileInput.addEventListener('change', (e) => {
   const file = e.target.files?.[0]
@@ -216,3 +363,8 @@ resize()
 ensureEdges()
 renderHistory(historyList)
 requestAnimationFrame(loop)
+
+// Complete any pending Spotify OAuth redirect, then render the Spotify UI.
+spotify.handleRedirect()
+  .catch((err) => console.warn('[spotify]', err.message))
+  .finally(refreshSpotifyUi)

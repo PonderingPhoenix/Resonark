@@ -62,6 +62,22 @@
         <section class="record">
           <h2>Vault</h2>
           <p class="muted small">Record a compact spectral fingerprint of what's playing for future analysis.</p>
+
+          <div id="spotify" class="spotify">
+            <div class="spotify-row">
+              <button class="btn tiny" data-action="spotify-connect">Connect Spotify</button>
+              <button class="btn tiny ghost" data-action="spotify-disconnect" hidden>Disconnect</button>
+              <label class="toggle" id="autolabel-wrap" hidden>
+                <input type="checkbox" id="autolabel" /> Auto-label
+              </label>
+            </div>
+            <div id="np-now" class="np" hidden>
+              <span class="np-dot"></span>
+              <span id="np-current" class="np-text">Nothing playing</span>
+              <button class="btn tiny ghost icon" data-action="spotify-refresh" title="Refresh now playing">⟳</button>
+            </div>
+          </div>
+
           <div class="now-playing">
             <input id="np-title" type="text" placeholder="Track title (optional)" />
             <input id="np-artist" type="text" placeholder="Artist (optional)" />
@@ -70,6 +86,15 @@
             <span class="rec-dot"></span><span class="rec-label">Record</span>
             <span id="rec-timer" class="rec-timer" hidden>0:00</span>
           </button>
+        </section>
+
+        <section class="recent" id="recent-section" hidden>
+          <div class="history-head">
+            <h2>Recently played</h2>
+            <button class="btn tiny ghost" data-action="spotify-recent-refresh">Refresh</button>
+          </div>
+          <p class="muted small">From your Spotify account — metadata only (no audio). Click a track to label your next recording with it.</p>
+          <div id="recent-list" class="recent-list"></div>
         </section>
 
         <section class="history">

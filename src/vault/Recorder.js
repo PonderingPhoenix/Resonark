@@ -71,7 +71,7 @@ export class Recorder {
 
   /**
    * Stop recording and build the session record to persist.
-   * @param {{title?:string, artist?:string}} label
+   * @param {{title?:string, artist?:string, spotify?:object}} label
    */
   finish(label = {}) {
     this.recording = false
@@ -101,6 +101,7 @@ export class Recorder {
         title: (label.title || '').trim(),
         artist: (label.artist || '').trim(),
         source: this.engine.sourceType || 'unknown',
+        ...(label.spotify ? { spotify: label.spotify } : {}),
       },
       stats,
       dominant: dominantBand(stats),
