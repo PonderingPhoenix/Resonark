@@ -3,7 +3,8 @@ import { AudioEngine } from './audio/AudioEngine.js'
 import { computeFeatures } from './audio/features.js'
 import { makeBands, downsample } from './vault/fingerprint.js'
 import { Recorder } from './vault/Recorder.js'
-import { saveSession } from './vault/store.js'
+import { saveSession, upsertReferenceFromSession } from './vault/store.js'
+import { trackKeyOf } from './vault/trackKey.js'
 import { visualizers, getVisualizer } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
 import { SpotifyClient } from './integrations/spotify.js'
@@ -227,19 +228,59 @@ async function renderRecent() {
     return
   }
   for (const t of tracks) {
-    const row = document.createElement('button')
+    const row = document.createElement('div')
     row.className = 'recent-item'
-    row.innerHTML = `<span class="recent-main">${escapeHtml(t.title)}</span>` +
+
+    const main = document.createElement('button')
+    main.className = 'recent-main-btn'
+    main.innerHTML = `<span class="recent-main">${escapeHtml(t.title)}</span>` +
       `<span class="recent-sub">${escapeHtml(t.artist)} · ${formatAgo(t.playedAt)}</span>`
-    row.addEventListener('click', () => {
+    main.title = 'Use this track to label your next recording'
+    main.addEventListener('click', () => {
       pendingLabelTrack = t
       npTitle.value = t.title
       npArtist.value = t.artist
       recentList.querySelectorAll('.recent-item').forEach((x) => x.classList.remove('selected'))
       row.classList.add('selected')
     })
+
+    const add = document.createElement('button')
+    add.className = 'recent-add'
+    add.textContent = '＋'
+    add.title = 'Log this play to your vault — it inherits a clean reference spectrum if you have captured this track'
+    add.addEventListener('click', async (e) => {
+      e.stopPropagation()
+      add.disabled = true
+      await logReferencePlay(t)
+      add.textContent = '✓'
+      setTimeout(() => { add.textContent = '＋'; add.disabled = false }, 1400)
+    })
+
+    row.append(main, add)
     recentList.append(row)
   }
+}
+
+/**
+ * Log a metadata-only play to the vault. It carries no measured spectrum of its
+ * own; the history view resolves a borrowed fingerprint from the reference
+ * library by track key (if a clean capture of the same track exists).
+ */
+async function logReferencePlay(track) {
+  const spotify = { id: track.id, uri: track.uri, album: track.album, image: track.image, isrc: track.isrc }
+  const session = {
+    startedAt: Date.now(),
+    createdAt: Date.now(),
+    durationMs: 0,
+    kind: 'reference',
+    trackKey: trackKeyOf(spotify, track),
+    capturePath: 'reference',
+    referenceEligible: false,
+    label: { title: track.title, artist: track.artist, source: 'spotify', spotify },
+    spectrogramDims: { bins: 0, cols: 0 },
+  }
+  await saveSession(session)
+  await renderHistory(historyList)
 }
 
 function escapeHtml(s) {
@@ -269,11 +310,14 @@ async function stopRecording() {
   const session = recorder.finish({
     title: manualTitle || (t ? t.title : ''),
     artist: manualArtist || (t ? t.artist : ''),
-    spotify: t ? { id: t.id, uri: t.uri, album: t.album, image: t.image } : undefined,
+    spotify: t ? { id: t.id, uri: t.uri, album: t.album, image: t.image, isrc: t.isrc } : undefined,
   })
   recordingTrack = null
   if (session.spectrogramDims.cols > 0) {
-    await saveSession(session)
+    const id = await saveSession(session)
+    session.id = id
+    // A clean (file) capture of an identifiable track seeds the reference library.
+    await upsertReferenceFromSession(session)
     await renderHistory(historyList)
   }
   // Reset label fields so they don't carry over to the next recording.

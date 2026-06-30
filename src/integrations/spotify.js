@@ -50,6 +50,7 @@ function mapTrack(item) {
     image: item.album?.images?.slice(-1)[0]?.url || '',
     id: item.id || '',
     uri: item.uri || '',
+    isrc: item.external_ids?.isrc || '', // recording-level identity, when present
     durationMs: item.duration_ms || 0,
   }
 }

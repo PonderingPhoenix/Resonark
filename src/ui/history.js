@@ -1,8 +1,12 @@
 import { heat } from '../utils/colors.js'
-import { listSessions, deleteSession, updateSession } from '../vault/store.js'
+import { listSessions, deleteSession, updateSession, listReferences } from '../vault/store.js'
 
-// Renders the vault: one card per recorded session with a spectrogram thumbnail,
-// editable label, key stats, and delete. Also handles "export all".
+// Renders the vault. Two kinds of entry:
+//   - captured: a real recording with its own measured spectrogram.
+//   - reference: a metadata-only logged play. It has no spectrum of its own;
+//     we resolve a borrowed one from the reference library by track key. That
+//     resolution happens here at render time, so capturing a track later
+//     automatically backfills every logged play of it.
 
 const fmtTime = (ms) => {
   const s = Math.round(ms / 1000)
@@ -14,15 +18,16 @@ const fmtDate = (ts) =>
     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   })
 
-/** Draw a stored flat-array spectrogram into a small canvas. */
-function drawThumb(canvas, session) {
-  const { spectrogram: sg, spectrogramDims: dims } = session
+/** Draw a flat-array spectrogram (from a session OR a reference) into a canvas. */
+function drawThumb(canvas, fp) {
   const ctx = canvas.getContext('2d')
   const W = canvas.width
   const H = canvas.height
   ctx.fillStyle = '#05060a'
   ctx.fillRect(0, 0, W, H)
-  if (!dims || !dims.cols) return
+  const sg = fp?.spectrogram
+  const dims = fp?.spectrogramDims
+  if (!sg || !dims || !dims.cols) return false
 
   const { bins, cols } = dims
   const cw = W / cols
@@ -35,6 +40,18 @@ function drawThumb(canvas, session) {
       ctx.fillRect(c * cw, y0, Math.ceil(cw), Math.ceil(H / bins))
     }
   }
+  return true
+}
+
+function drawPlaceholder(canvas, text) {
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = '#080a12'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.fillStyle = '#4f5870'
+  ctx.font = '12px ui-sans-serif, system-ui, sans-serif'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2)
 }
 
 function statChip(label, value) {
@@ -44,15 +61,21 @@ function statChip(label, value) {
   return el
 }
 
-function card(session, onChange) {
+function card(session, refs, onChange) {
+  const isReference = session.kind === 'reference'
+  const ref = isReference ? refs.get(session.trackKey) : null
+  const fp = isReference ? ref : session // where the spectrogram + stats live
+  const hasFp = !!(fp && fp.spectrogramDims && fp.spectrogramDims.cols > 0)
+
   const el = document.createElement('div')
-  el.className = 'card'
+  el.className = 'card' + (isReference ? ' is-reference' : '') + (isReference && hasFp ? ' inherited' : '')
 
   const thumb = document.createElement('canvas')
   thumb.className = 'thumb'
   thumb.width = 240
   thumb.height = 70
-  drawThumb(thumb, session)
+  if (hasFp) drawThumb(thumb, fp)
+  else drawPlaceholder(thumb, isReference ? 'no spectrum yet — capture this track' : 'no spectrum')
 
   const body = document.createElement('div')
   body.className = 'card-body'
@@ -80,26 +103,46 @@ function card(session, onChange) {
 
   const meta = document.createElement('div')
   meta.className = 'card-meta'
-  meta.textContent = `${fmtDate(session.startedAt)} · ${fmtTime(session.durationMs)} · ${session.label?.source || '—'}`
+  meta.textContent = isReference
+    ? `${fmtDate(session.startedAt)} · played · Spotify`
+    : `${fmtDate(session.startedAt)} · ${fmtTime(session.durationMs)} · ${session.label?.source || '—'}`
 
   const chips = document.createElement('div')
   chips.className = 'chips'
-  const s = session.stats || {}
-  chips.append(
-    statChip('Bright', `${Math.round(s.avgCentroid || 0)}Hz`),
-    statChip('Loud', Math.round(s.avgLoudness || 0)),
-    statChip('Dyn', Math.round(s.dynamicRange || 0)),
-    statChip('Dom', session.dominant || '—'),
-  )
-  const cap = session.capturePath || session.label?.source
-  if (cap && cap !== 'unknown') {
-    const c = statChip(cap === 'mic' ? '🎤 mic' : '📁 file', cap === 'mic' ? 'environment' : 'reference')
-    c.classList.add('capture-chip', cap === 'mic' ? 'env' : 'ref')
-    c.title = cap === 'mic'
-      ? 'Acoustic capture — measures this speaker/room, specific to the moment'
-      : 'Digital capture — a property of the recording, eligible as a shared reference'
-    chips.append(c)
+  if (hasFp) {
+    const s = fp.stats || {}
+    chips.append(
+      statChip('Bright', `${Math.round(s.avgCentroid || 0)}Hz`),
+      statChip('Loud', Math.round(s.avgLoudness || 0)),
+      statChip('Dyn', Math.round(s.dynamicRange || 0)),
+      statChip('Dom', fp.dominant || '—'),
+    )
   }
+
+  if (isReference) {
+    if (hasFp) {
+      const c = statChip('↩', 'inherited')
+      c.classList.add('inherited-chip')
+      c.title = 'Spectrum borrowed from your clean capture of this track'
+      chips.append(c)
+    } else {
+      const c = statChip('○', 'no spectrum yet')
+      c.classList.add('pending-chip')
+      c.title = 'Logged play only — capture this track once from a file to fill in its spectrum'
+      chips.append(c)
+    }
+  } else {
+    const cap = session.capturePath || session.label?.source
+    if (cap && cap !== 'unknown') {
+      const c = statChip(cap === 'mic' ? '🎤 mic' : '📁 file', cap === 'mic' ? 'environment' : 'reference')
+      c.classList.add('capture-chip', cap === 'mic' ? 'env' : 'ref')
+      c.title = cap === 'mic'
+        ? 'Acoustic capture — measures this speaker/room, specific to the moment'
+        : 'Digital capture — a property of the recording, eligible as a shared reference'
+      chips.append(c)
+    }
+  }
+
   if (session.label?.spotify) {
     const sp = statChip('♪', 'Spotify')
     sp.classList.add('spotify-chip')
@@ -123,7 +166,9 @@ function card(session, onChange) {
 }
 
 export async function renderHistory(listEl) {
-  const sessions = await listSessions()
+  const [sessions, references] = await Promise.all([listSessions(), listReferences()])
+  const refs = new Map(references.map((r) => [r.trackKey, r]))
+
   listEl.innerHTML = ''
   if (!sessions.length) {
     const empty = document.createElement('p')
@@ -133,18 +178,20 @@ export async function renderHistory(listEl) {
     return
   }
   for (const session of sessions) {
-    listEl.append(card(session, () => renderHistory(listEl)))
+    listEl.append(card(session, refs, () => renderHistory(listEl)))
   }
 }
 
-/** Export the whole vault as a downloadable JSON file (spectrograms become number arrays). */
+/** Export the whole vault (sessions + reference library) as downloadable JSON. */
 export async function exportAll() {
-  const sessions = await listSessions()
-  const serializable = sessions.map((s) => ({
-    ...s,
-    spectrogram: Array.from(s.spectrogram || []),
-  }))
-  const blob = new Blob([JSON.stringify(serializable, null, 2)], { type: 'application/json' })
+  const [sessions, references] = await Promise.all([listSessions(), listReferences()])
+  const toJson = (o) => ({ ...o, spectrogram: o.spectrogram ? Array.from(o.spectrogram) : undefined })
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    sessions: sessions.map(toJson),
+    references: references.map(toJson),
+  }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

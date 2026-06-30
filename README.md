@@ -87,6 +87,29 @@ instrument* for your listening environment — and it's why only file-path
 captures (`referenceEligible: true`) may ever seed a shared, track-keyed
 "reference" fingerprint. Mic captures stay environment-specific.
 
+## Reference library (within-vault fingerprint reuse)
+
+A song's *digital* spectrum is a property of the recording, not of the moment —
+so once you've captured a track cleanly (from a file), later plays of the **same
+track** can inherit that spectrum without re-capturing.
+
+- Capturing a **file** recording of an identifiable track seeds a **reference**
+  in a track-keyed library (`references` store), keyed by **ISRC → Spotify ID →
+  name+artist**, in that order of reliability. A longer capture supersedes a
+  shorter one.
+- In **Recently played**, the **＋** button logs a metadata-only *play* to your
+  vault. It carries no spectrum of its own; the history view **resolves a
+  borrowed fingerprint** from the library by track key at render time. So:
+  - matching a captured track → the play shows the inherited spectrum (↩ chip,
+    dashed thumbnail);
+  - no match yet → a "no spectrum yet — capture this track" placeholder.
+- Because resolution happens at render time, capturing a track *later*
+  automatically **backfills** every earlier logged play of it.
+
+Only file captures seed references; mic captures never do (they measure your
+room, not the recording). Today the library is local to your own vault — the
+same keying extends cleanly to a shared, cross-user library behind a backend.
+
 **Setup:** create an app at the
 [Spotify dashboard](https://developer.spotify.com/dashboard), add your EchoVault
 URL as a Redirect URI (use `http://127.0.0.1:5173/` for local dev — Spotify
@@ -110,7 +133,8 @@ src/
   vault/
     Recorder.js           accumulates a session into a compact fingerprint
     fingerprint.js        log-spaced band mapping + downsampling
-    store.js              IndexedDB persistence
+    trackKey.js           track identity (ISRC → Spotify ID → name+artist)
+    store.js              IndexedDB persistence (sessions + reference library)
   integrations/
     spotify.js            PKCE OAuth + currently-playing / recently-played
   ui/
