@@ -3,9 +3,12 @@
 A music visualizer and **media multi-analyzer** that does two things most
 visualizers don't bother with:
 
-1. **Shows** a live, multiband representation of whatever is playing — a real
-   FFT equalizer plus several fun abstract modes (spectrum bars, radial burst,
-   reactive particle field, scrolling spectrogram, oscilloscope).
+1. **Measures & shows** a live, multiband representation of whatever is playing.
+   The **Meter (RTA)** mode is an audio multimeter — level in dBFS, the dominant
+   frequency + nearest musical note, and an octave-band real-time analyzer — so
+   pointing the mic at your system reads out your actual *speaker + room*. There
+   are also fun abstract modes (spectrum bars, radial burst, reactive particle
+   field, scrolling spectrogram, oscilloscope).
 2. **Remembers** it. Every session can be recorded into a local *vault* as a
    compact spectral fingerprint (a downsampled spectrogram thumbnail + summary
    statistics), so you can build a queryable history of how the things you
@@ -66,6 +69,24 @@ server and no client secret. Spotify's `currently-playing` and
 > spectral fingerprint when EchoVault actually hears the audio (file or mic);
 > Spotify just supplies the label.
 
+## Capture path: measurement vs reference
+
+Every recording records **how** it was captured, because that determines what
+the spectrum actually means:
+
+| Capture | What it is | Where it's tapped | Reusable as a track's reference? |
+|---|---|---|---|
+| **File** 📁 | the decoded *digital* signal | inside the app, before the output device | **Yes** — it's a property of the recording (same regardless of BT speaker vs headphones) |
+| **Mic** 🎤 | the *acoustic* sound in the air | after the speaker + room | **No** — it measures this speaker, room, and volume at this moment |
+
+So playing the same track through a Bluetooth speaker vs. headphones gives the
+**same** file-path spectrum (the output device is downstream of where we
+measure) but a **completely different** mic spectrum (and headphones are nearly
+inaudible to the mic). That makes the mic mode a genuine *measurement
+instrument* for your listening environment — and it's why only file-path
+captures (`referenceEligible: true`) may ever seed a shared, track-keyed
+"reference" fingerprint. Mic captures stay environment-specific.
+
 **Setup:** create an app at the
 [Spotify dashboard](https://developer.spotify.com/dashboard), add your EchoVault
 URL as a Redirect URI (use `http://127.0.0.1:5173/` for local dev — Spotify
@@ -81,9 +102,10 @@ src/
   style.css               dark UI theme
   audio/
     AudioEngine.js        AudioContext + AnalyserNode, file/mic sources
-    features.js           spectral feature extraction
+    features.js           spectral features + measurement helpers (dBFS, note, peak freq)
   visualizers/
     index.js              mode registry
+    meter.js              Meter (RTA) instrument: dBFS, dominant freq + note, octave RTA
     bars.js  radial.js  particles.js  spectrogram.js  oscilloscope.js
   vault/
     Recorder.js           accumulates a session into a compact fingerprint

@@ -91,6 +91,15 @@ function card(session, onChange) {
     statChip('Dyn', Math.round(s.dynamicRange || 0)),
     statChip('Dom', session.dominant || '—'),
   )
+  const cap = session.capturePath || session.label?.source
+  if (cap && cap !== 'unknown') {
+    const c = statChip(cap === 'mic' ? '🎤 mic' : '📁 file', cap === 'mic' ? 'environment' : 'reference')
+    c.classList.add('capture-chip', cap === 'mic' ? 'env' : 'ref')
+    c.title = cap === 'mic'
+      ? 'Acoustic capture — measures this speaker/room, specific to the moment'
+      : 'Digital capture — a property of the recording, eligible as a shared reference'
+    chips.append(c)
+  }
   if (session.label?.spotify) {
     const sp = statChip('♪', 'Spotify')
     sp.classList.add('spotify-chip')

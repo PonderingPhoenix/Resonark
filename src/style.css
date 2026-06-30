@@ -148,6 +148,8 @@ body { overflow: hidden; }
 .np-text { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .btn.icon.tiny { min-width: 0; padding: 4px 7px; }
 .spotify-chip { color: #1db954 !important; border-color: #1db95455 !important; }
+.capture-chip.env { color: #ffb13d !important; border-color: #ffb13d44 !important; }
+.capture-chip.ref { color: #6ad1ff !important; border-color: #6ad1ff44 !important; }
 
 .recent-list { display: flex; flex-direction: column; gap: 4px; max-height: 240px; overflow-y: auto; }
 .recent-item {

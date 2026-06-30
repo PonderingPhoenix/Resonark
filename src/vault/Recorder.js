@@ -93,10 +93,18 @@ export class Recorder {
       dynamicRange: a.maxRms === 0 ? 0 : a.maxRms - (a.minRms === Infinity ? 0 : a.minRms),
     }
 
+    const capturePath = this.engine.sourceType || 'unknown'
     return {
       startedAt: this.wallStart,
       createdAt: Date.now(),
       durationMs: Date.now() - this.wallStart,
+      // How the audio was captured. A 'file' capture is the decoded digital
+      // signal (a property of the recording — eligible to seed a shared
+      // reference fingerprint). A 'mic' capture is acoustic — it measures this
+      // speaker + room + volume, so it is environment-specific and must never
+      // be reused as a track's canonical spectrum.
+      capturePath,
+      referenceEligible: capturePath === 'file',
       label: {
         title: (label.title || '').trim(),
         artist: (label.artist || '').trim(),

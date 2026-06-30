@@ -28,6 +28,7 @@ const $ = (sel) => document.querySelector(sel)
 const canvas = $('#viz')
 const ctx = canvas.getContext('2d')
 const hint = $('#hint')
+const overlay = $('#overlay')
 const readouts = $('#readouts')
 const overlayMeters = {
   loudness: $('[data-meter="loudness"]'),
@@ -81,9 +82,16 @@ visualizers.forEach((v, i) => {
     activeViz = getVisualizer(v.name)
     modeButtons.querySelectorAll('.mode').forEach((x) => x.classList.remove('active'))
     b.classList.add('active')
+    applyOverlay()
   })
   modeButtons.append(b)
 })
+
+// The Meter mode draws its own readouts on the canvas, so the DOM overlay
+// (brand + meter bars) would collide with it — hide the overlay in Meter mode.
+function applyOverlay() {
+  overlay.hidden = activeViz.name === 'meter'
+}
 
 // ---- Render loop ----
 function setMeter(el, value) {
@@ -114,7 +122,13 @@ function loop() {
 
   recorder.tick(freq)
 
-  activeViz.draw({ ctx, w: canvas.width, h: canvas.height, freq, time, bands, features, t: performance.now() })
+  const audio = {
+    sampleRate: engine.sampleRate,
+    fftSize: engine.fftSize,
+    minDb: engine.minDecibels,
+    maxDb: engine.maxDecibels,
+  }
+  activeViz.draw({ ctx, w: canvas.width, h: canvas.height, freq, time, bands, features, audio, t: performance.now() })
   updateReadouts(features)
 
   // transport + recording UI
@@ -361,6 +375,7 @@ seek.addEventListener('input', () => {
 // ---- Boot ----
 resize()
 ensureEdges()
+applyOverlay()
 renderHistory(historyList)
 requestAnimationFrame(loop)
 
