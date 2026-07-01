@@ -77,9 +77,12 @@
         </section>
 
         <section class="modes">
-          <h2>Visual mode</h2>
-          <div id="mode-buttons" class="mode-grid"></div>
+          <div class="section-head">
+            <h2>Visual mode</h2>
+            <button class="btn tiny ghost" data-action="toggle-looks" id="looks-toggle" aria-expanded="false" aria-controls="mode-buttons">Change ▾</button>
+          </div>
           <p id="mode-desc" class="muted small mode-desc"></p>
+          <div id="mode-buttons" class="mode-grid" hidden></div>
           <div class="mode-extra">
             <button class="btn tiny" data-action="surprise" title="Pick a look for me">🎲 Surprise me</button>
             <button class="btn tiny ghost" data-action="toggle-customize" id="customize-toggle" aria-expanded="false" aria-controls="viz-opts">Customize ▾</button>
@@ -125,7 +128,8 @@
             </div>
           </div>
 
-          <div class="now-playing">
+          <button class="btn tiny ghost" data-action="toggle-label" id="label-toggle" aria-expanded="false" aria-controls="now-playing">＋ Add a label</button>
+          <div class="now-playing" id="now-playing" hidden>
             <input id="np-title" type="text" placeholder="Track title (optional)" />
             <input id="np-artist" type="text" placeholder="Artist (optional)" />
           </div>

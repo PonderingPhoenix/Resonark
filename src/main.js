@@ -16,6 +16,7 @@ import { createAutoState, stepAuto, trackChangeDecision } from './vault/autoCapt
 import { MOODS } from './vault/mood.js'
 
 const VIZ_BANDS = 96 // bands used for display (the vault stores 64 separately)
+const BG = '#05060a' // the one constant canvas background every mode clears to
 
 const settings = loadSettings()
 const engine = new AudioEngine(settings)
@@ -135,6 +136,9 @@ visualizers.forEach((v, i) => {
 function selectMode(name) {
   activeViz = getVisualizer(name)
   modeButtons.querySelectorAll('.mode').forEach((x) => x.classList.toggle('active', x.dataset.mode === activeViz.name))
+  // Wipe the previous mode's pixels so trail-based modes don't ghost through.
+  ctx.fillStyle = BG
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
   applyOverlay()
   updateModeDesc()
 }
@@ -146,9 +150,10 @@ function surpriseMode() {
   if (pick) selectMode(pick.name)
 }
 
-// Show a plain-language description of the current visual mode under the buttons.
+// Show the current visual mode's name + a plain-language description, so it's
+// clear what's active even when the mode grid is collapsed.
 function updateModeDesc() {
-  if (modeDesc) modeDesc.textContent = activeViz.desc || ''
+  if (modeDesc) modeDesc.innerHTML = `<b>${activeViz.label}</b> — ${activeViz.desc || ''}`
 }
 
 // Re-render History honoring the active search + mood filter. Every code path
@@ -531,6 +536,14 @@ async function renderRecent() {
       pendingLabelTrack = t
       npTitle.value = t.title
       npArtist.value = t.artist
+      // Reveal the (collapsed) label fields so the picked track is visible.
+      const np = $('#now-playing')
+      if (np.hidden) {
+        np.hidden = false
+        const btn = $('#label-toggle')
+        btn.setAttribute('aria-expanded', 'true')
+        btn.textContent = '－ Hide label'
+      }
       recentList.querySelectorAll('.recent-item').forEach((x) => x.classList.remove('selected'))
       row.classList.add('selected')
     })
@@ -773,6 +786,24 @@ document.addEventListener('click', (e) => {
     case 'surprise':
       surpriseMode()
       break
+    case 'toggle-looks': {
+      const grid = $('#mode-buttons')
+      const btn = $('#looks-toggle')
+      const show = grid.hidden
+      grid.hidden = !show
+      btn.setAttribute('aria-expanded', String(show))
+      btn.textContent = show ? 'Change ▴' : 'Change ▾'
+      break
+    }
+    case 'toggle-label': {
+      const np = $('#now-playing')
+      const btn = $('#label-toggle')
+      const show = np.hidden
+      np.hidden = !show
+      btn.setAttribute('aria-expanded', String(show))
+      btn.textContent = show ? '－ Hide label' : '＋ Add a label'
+      break
+    }
     case 'toggle-customize': {
       const opts = $('#viz-opts')
       const btn = $('#customize-toggle')
