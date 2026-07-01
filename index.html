@@ -104,7 +104,9 @@
             <h2>History</h2>
             <div class="history-actions">
               <button class="btn tiny" data-action="show-analytics" title="Open vault analytics">📊 Analytics</button>
-              <button class="btn tiny ghost" data-action="export-all" title="Export all sessions as JSON">Export</button>
+              <button class="btn tiny ghost" data-action="export-all" title="Export the whole vault as JSON">Export</button>
+              <button class="btn tiny ghost" data-action="import-vault" title="Import a vault export (merges, skips duplicates)">Import</button>
+              <input id="import-input" type="file" accept="application/json,.json" hidden />
             </div>
           </div>
           <div id="history-list" class="history-list"></div>
