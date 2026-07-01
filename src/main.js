@@ -3,7 +3,7 @@ import { AudioEngine } from './audio/AudioEngine.js'
 import { computeFeatures } from './audio/features.js'
 import { makeBands, downsample } from './vault/fingerprint.js'
 import { Recorder } from './vault/Recorder.js'
-import { saveSession, upsertReferenceFromSession } from './vault/store.js'
+import { saveSession, upsertReferenceFromSession, bulkImport } from './vault/store.js'
 import { trackKeyOf } from './vault/trackKey.js'
 import { visualizers, getVisualizer } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
@@ -61,6 +61,7 @@ const recentList = $('#recent-list')
 const analyticsOverlay = $('#analytics-overlay')
 const analyticsBody = $('#analytics-body')
 const fileOnlyToggle = $('#an-file-only')
+const importInput = $('#import-input')
 
 // ---- Canvas sizing (device pixels for crisp rendering) ----
 function resize() {
@@ -422,6 +423,9 @@ document.addEventListener('click', (e) => {
     case 'export-all':
       exportAll()
       break
+    case 'import-vault':
+      importInput.click()
+      break
     case 'show-analytics':
       openAnalytics()
       break
@@ -467,6 +471,42 @@ autolabelInput.addEventListener('change', () => { spotify.autoLabel = autolabelI
 fileInput.addEventListener('change', (e) => {
   const file = e.target.files?.[0]
   if (file) startFile(file)
+})
+
+async function importVault(file) {
+  let data
+  try {
+    data = JSON.parse(await file.text())
+  } catch {
+    alert('That file is not a valid EchoVault JSON export.')
+    return
+  }
+  // Accept both the current { sessions, references } shape and the older
+  // bare-array-of-sessions export.
+  const sessions = Array.isArray(data) ? data : (data.sessions || [])
+  const references = Array.isArray(data) ? [] : (data.references || [])
+  if (!sessions.length && !references.length) {
+    alert('No sessions or references found in that file.')
+    return
+  }
+  try {
+    const res = await bulkImport(sessions, references)
+    await renderHistory(historyList)
+    refreshAnalyticsIfOpen()
+    alert(
+      `Imported ${res.added} session${res.added === 1 ? '' : 's'}` +
+      (res.skipped ? ` (${res.skipped} already present, skipped)` : '') +
+      (res.references ? ` and ${res.references} reference${res.references === 1 ? '' : 's'}` : '') + '.',
+    )
+  } catch (err) {
+    alert('Import failed: ' + err.message)
+  }
+}
+
+importInput.addEventListener('change', (e) => {
+  const file = e.target.files?.[0]
+  if (file) importVault(file)
+  importInput.value = '' // allow re-importing the same file
 })
 
 seek.addEventListener('input', () => {

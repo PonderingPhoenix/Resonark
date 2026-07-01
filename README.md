@@ -39,7 +39,7 @@ npm run preview  # preview the production build
 | Audio access | Web Audio API. `<audio>` + `MediaElementSource` for files, `getUserMedia` for mic, `getDisplayMedia` (tab/system audio) for hands-free loopback capture on desktop. |
 | Analysis | `AnalyserNode` FFT → byte frequency data, reduced to log-spaced bands + spectral features (loudness, centroid/brightness, bass/mid/treble energy, dynamic range). |
 | Visuals | Plain Canvas 2D. Each mode is a self-contained renderer in `src/visualizers/`. |
-| The vault | Recorded sessions are stored in **IndexedDB** as a flat `Uint8Array` spectrogram (64 bins × up to ~720 columns) plus aggregate stats. Compact by design — no raw PCM, no per-frame bloat. |
+| The vault | Recorded sessions are stored in **IndexedDB** as a flat `Uint8Array` spectrogram (64 bins × up to ~720 columns) plus aggregate stats. Compact by design — no raw PCM, no per-frame bloat. **Export** the whole vault (sessions + reference library) to JSON and **Import** it back on any device — imports merge and skip duplicates, so re-importing is idempotent. |
 
 ### Why not just read Spotify's spectrum?
 
@@ -164,7 +164,7 @@ src/
   integrations/
     spotify.js            PKCE OAuth + currently-playing / recently-played
   ui/
-    history.js            renders the vault, thumbnails, edit/delete/export
+    history.js            renders the vault, thumbnails, edit/delete/export/import
     charts.js             self-drawn Canvas/DOM chart primitives (no chart lib)
     analytics.js          builds the analytics dashboard from analytics.js + charts.js
   utils/

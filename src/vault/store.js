@@ -106,3 +106,47 @@ export async function upsertReferenceFromSession(session) {
   })
   return true
 }
+
+// Exports serialize spectrograms as plain number arrays; revive them to Uint8Array.
+function reviveSpectro(o) {
+  if (o && Array.isArray(o.spectrogram)) return { ...o, spectrogram: Uint8Array.from(o.spectrogram) }
+  return o
+}
+
+// Signature used to skip re-importing sessions already in the vault.
+const sessionSig = (s) => `${s.startedAt}|${s.kind}|${s.capturePath}|${s.durationMs}|${s.trackKey}`
+
+/**
+ * Merge sessions + references from an export into the vault. Sessions are added
+ * with fresh ids (never overwriting existing rows); ones matching an existing
+ * signature are skipped so re-importing the same file is idempotent. References
+ * are upserted by trackKey.
+ * @returns {Promise<{added:number, skipped:number, references:number}>}
+ */
+export async function bulkImport(sessions = [], references = []) {
+  const db = await openDb()
+  const existing = await listSessions()
+  const seen = new Set(existing.map(sessionSig))
+  let added = 0, skipped = 0
+
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction([SESSIONS, REFERENCES], 'readwrite')
+    const ss = tx.objectStore(SESSIONS)
+    const rs = tx.objectStore(REFERENCES)
+    for (const raw of sessions) {
+      if (!raw || typeof raw.startedAt !== 'number' || !raw.kind) continue
+      const s = reviveSpectro(raw)
+      if (seen.has(sessionSig(s))) { skipped++; continue }
+      seen.add(sessionSig(s))
+      delete s.id
+      ss.add(s)
+      added++
+    }
+    for (const raw of references) {
+      if (raw && raw.trackKey) rs.put(reviveSpectro(raw))
+    }
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+  })
+  return { added, skipped, references: references.filter((r) => r && r.trackKey).length }
+}
