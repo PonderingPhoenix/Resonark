@@ -72,6 +72,10 @@ const importInput = $('#import-input')
 const settingsOverlay = $('#settings-overlay')
 const introOverlay = $('#intro-overlay')
 const modeDesc = $('#mode-desc')
+const appEl = $('#app')
+const panelToggle = $('#panel-toggle')
+const panelScrim = $('#panel-scrim')
+const systemTip = $('#system-tip')
 const setFft = $('#set-fft')
 const setSmooth = $('#set-smooth')
 const setMinDb = $('#set-mindb')
@@ -120,6 +124,20 @@ function updateModeDesc() {
 function applyOverlay() {
   overlay.hidden = activeViz.name === 'meter'
 }
+
+// ---- Mobile panel drawer ----
+const isNarrow = () => window.matchMedia('(max-width: 760px)').matches
+function setPanel(open) {
+  appEl.classList.toggle('menu-collapsed', !open)
+  // The scrim only makes sense over a full-screen visualizer (narrow layout).
+  panelScrim.hidden = !open || !isNarrow()
+  panelToggle.textContent = open ? '✕' : '☰'
+  panelToggle.setAttribute('aria-expanded', String(open))
+  panelToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu')
+}
+const togglePanel = () => setPanel(appEl.classList.contains('menu-collapsed'))
+// On phones a live source should reveal the visualizer, so auto-collapse.
+function collapseIfNarrow() { if (isNarrow()) setPanel(false) }
 
 // ---- Render loop ----
 function setMeter(el, value) {
@@ -195,6 +213,7 @@ async function startFile(file) {
   readouts.hidden = false
   transport.hidden = false
   setLive(true, file.name)
+  collapseIfNarrow()
   playBtn.textContent = '❚❚'
   el.play().catch(() => {})
   el.addEventListener('ended', () => {
@@ -211,6 +230,7 @@ async function startMic() {
     readouts.hidden = false
     transport.hidden = true
     setLive(true, 'Live microphone')
+    collapseIfNarrow()
   } catch (err) {
     alert('Could not access microphone: ' + err.message)
   }
@@ -224,6 +244,7 @@ async function startSystem() {
     readouts.hidden = false
     transport.hidden = true
     setLive(true, 'System / tab audio')
+    collapseIfNarrow()
   } catch (err) {
     // The user cancelling the share picker throws NotAllowedError — stay silent for that.
     if (err && err.name === 'NotAllowedError') return
@@ -497,6 +518,12 @@ document.addEventListener('click', (e) => {
     case 'hide-settings':
       settingsOverlay.hidden = true
       break
+    case 'toggle-panel':
+      togglePanel()
+      break
+    case 'collapse-panel':
+      setPanel(false)
+      break
     case 'show-intro':
       introOverlay.hidden = false
       break
@@ -614,6 +641,7 @@ window.addEventListener('keydown', (e) => {
 
   if (e.key === 'Escape') {
     if (anyOverlayOpen()) { closeOverlays(); e.preventDefault() }
+    else if (isNarrow() && !appEl.classList.contains('menu-collapsed')) { setPanel(false); e.preventDefault() }
     return
   }
   if (anyOverlayOpen()) return // while a modal is open, only Esc is active
@@ -639,10 +667,17 @@ window.addEventListener('keydown', (e) => {
 })
 
 // ---- Boot ----
-// Hide the system-audio buttons where the browser can't capture it (mobile, etc.).
-if (!engine.supportsSystemAudio) {
+// Hide the system-audio buttons where the browser can't capture it (mobile, etc.);
+// where it IS supported, surface the "how to share tab audio" tip.
+if (engine.supportsSystemAudio) {
+  if (systemTip) systemTip.hidden = false
+} else {
   document.querySelectorAll('[data-action="use-system"]').forEach((b) => { b.hidden = true })
 }
+
+// On phones, start with the menu tucked away so the visualizer is full-screen.
+if (isNarrow()) setPanel(false)
+
 resize()
 ensureEdges()
 applyOverlay()

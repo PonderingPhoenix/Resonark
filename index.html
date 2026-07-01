@@ -9,6 +9,8 @@
   </head>
   <body>
     <div id="app">
+      <button id="panel-toggle" class="panel-toggle" data-action="toggle-panel" aria-label="Open menu" aria-expanded="false">☰</button>
+      <div id="panel-scrim" class="panel-scrim" data-action="collapse-panel" hidden></div>
       <main id="stage">
         <canvas id="viz"></canvas>
 
@@ -51,8 +53,11 @@
           <div class="row">
             <button class="btn" data-action="pick-file">📁 File</button>
             <button class="btn" data-action="use-mic">🎤 Mic</button>
-            <button class="btn" data-action="use-system" id="system-btn" title="Capture system / tab audio (clean, no mic)">🖥 System</button>
+            <button class="btn" data-action="use-system" id="system-btn" title="Capture another tab's sound (e.g. YouTube) — clean, no mic">🖥 System</button>
           </div>
+          <p id="system-tip" class="muted small system-tip" hidden>
+            💡 To grab sound from YouTube/Spotify in another tab: click <b>System</b>, choose that <b>tab</b> (not “Entire screen”), and turn on <b>“Also share tab audio”</b> in the dialog.
+          </p>
           <input id="file-input" type="file" accept="audio/*" hidden />
           <div id="transport" class="transport" hidden>
             <button class="btn icon" data-action="playpause" title="Play / pause">▶</button>

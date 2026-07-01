@@ -30,6 +30,22 @@ body { overflow: hidden; }
 #stage { position: relative; overflow: hidden; background: #05060a; }
 #viz { display: block; width: 100%; height: 100%; }
 
+/* ---- Mobile menu toggle + drawer scrim (hidden on desktop) ---- */
+.panel-toggle {
+  display: none; /* shown only on narrow screens via the media query below */
+  position: fixed; z-index: 42;
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  right: calc(14px + env(safe-area-inset-right, 0px));
+  width: 44px; height: 44px; padding: 0;
+  place-items: center; font-size: 20px; line-height: 1;
+  color: var(--text); cursor: pointer;
+  background: rgba(8, 10, 18, 0.62); border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px; backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+}
+.panel-scrim { position: fixed; inset: 0; z-index: 38; background: rgba(2, 3, 6, 0.5); }
+.system-tip { margin: 2px 0 0; line-height: 1.45; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; }
+
 .overlay {
   position: absolute;
   top: 18px;
@@ -337,8 +353,26 @@ kbd {
 h2, p { line-height: 1.4; }
 
 @media (max-width: 760px) {
-  #app { grid-template-columns: 1fr; grid-template-rows: 45vh 1fr; }
-  #panel { border-left: none; border-top: 1px solid var(--line); }
+  /* Visualizer goes full-screen; the panel becomes a slide-in drawer so the
+     bars aren't squeezed into a sliver. Collapsed by default (set at boot). */
+  #app { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+  .panel-toggle { display: grid; }
+  #panel {
+    position: fixed; top: 0; right: 0; z-index: 40;
+    height: 100vh; height: 100dvh;
+    width: min(86vw, 340px);
+    border-left: 1px solid var(--line); border-top: none;
+    transform: translateX(0); transition: transform 0.26s ease;
+    box-shadow: -14px 0 44px rgba(0, 0, 0, 0.5);
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  }
+  #app.menu-collapsed #panel { transform: translateX(101%); }
+  #app.menu-collapsed .panel-scrim { display: none; }
+  /* When open, park the toggle (now ✕) just left of the drawer so it doesn't
+     collide with the panel's own header buttons. */
+  #app:not(.menu-collapsed) .panel-toggle {
+    right: calc(min(86vw, 340px) + 12px + env(safe-area-inset-right, 0px));
+  }
 }
 
 /* Respect device safe areas (notches / home indicators) when wrapped natively
@@ -352,8 +386,8 @@ h2, p { line-height: 1.4; }
 }
 @media (max-width: 760px) {
   @supports (padding: env(safe-area-inset-top)) {
-    /* On phones the stage is on top, so the safe-area padding belongs there. */
-    #panel { padding-top: 16px; }
+    /* The panel is now a full-height side drawer, so it keeps its own top
+       safe-area padding (set in the drawer rule above). */
     .overlay { top: calc(14px + env(safe-area-inset-top)); }
   }
 }
