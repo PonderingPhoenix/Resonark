@@ -149,7 +149,7 @@ export class AudioEngine {
     const audioTracks = stream.getAudioTracks()
     if (!audioTracks.length) {
       stream.getTracks().forEach((t) => t.stop())
-      throw new Error('No audio was shared. Pick a browser tab (or a screen) and enable “Share tab/system audio”.')
+      throw new Error('No audio came through. In the share dialog, pick the browser tab playing music (not “Entire screen”) and switch on “Also share tab audio”.')
     }
     this.stream = stream
     this.source = this.ctx.createMediaStreamSource(stream)
