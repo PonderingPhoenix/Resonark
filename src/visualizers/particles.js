@@ -1,26 +1,27 @@
 import { heat } from '../utils/colors.js'
 
-// Reactive particle field. Bass kicks shove the field outward, treble swirls it,
-// loudness fattens the dots. Rendered additively ('lighter') so particles glow
-// and overlaps brighten. Radii scale with canvas size so they stay visible on
-// high-DPI displays (the canvas is sized in device pixels).
+// Flowing particle field. Particles drift along a smooth, slowly-shifting curl
+// field that covers the whole canvas (so they stay evenly spread — no center gap,
+// no corner pooling), flow faster with the music, and get a brief outward pulse
+// on each beat. Edges wrap seamlessly so motion never stops.
 export const particles = {
   name: 'particles',
-  label: 'Particle Field',
+  label: 'Particles',
   _p: null,
   _w: 0,
   _h: 0,
 
   _init(w, h) {
-    const count = Math.min(340, Math.max(90, Math.floor((w * h) / 9000)))
+    const count = Math.min(300, Math.max(90, Math.floor((w * h) / 10000)))
     const p = new Array(count)
     for (let i = 0; i < count; i++) {
       p[i] = {
         x: Math.random() * w,
         y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        r: 0.7 + Math.random() * 1.5, // base size factor (multiplied by `scale`)
+        vx: 0,
+        vy: 0,
+        r: 0.7 + Math.random() * 1.6,
+        seed: Math.random() * Math.PI * 2, // per-particle phase so they don't move in lockstep
       }
     }
     this._p = p
@@ -28,54 +29,51 @@ export const particles = {
     this._h = h
   },
 
-  draw({ ctx, w, h, features }) {
+  draw({ ctx, w, h, features, t }) {
     if (!this._p || this._w !== w || this._h !== h) this._init(w, h)
-    // Keep particles visibly sized regardless of DPR / canvas resolution.
     const scale = Math.max(1, Math.min(w, h) / 520)
 
     ctx.globalCompositeOperation = 'source-over'
-    ctx.fillStyle = 'rgba(5,6,10,0.30)' // motion trails
+    ctx.fillStyle = 'rgba(5,6,10,0.24)' // motion trails
     ctx.fillRect(0, 0, w, h)
 
-    const bass = (features?.bass || 0) / 255
     const treble = (features?.treble || 0) / 255
     const loud = (features?.rms || 0) / 255
+    const beat = features?.beat || 0
+    const time = (t || 0) * 0.00012
+    const flow = (0.8 + loud * 3.2 + treble * 2.2) * scale  // drift speed, music-driven
+    const swirl = 0.006 + treble * 0.010                    // curl-field frequency
+    const kick = beat * 7 * scale                           // beat → brief outward pulse
     const cx = w / 2
     const cy = h / 2
-    const push = bass * bass * 3.4       // bass kick → outward shove
-    const swirl = 0.05 + treble * 0.28   // treble → rotation
-    const tint = Math.min(1, 0.35 + treble * 1.1)
-    const energy = Math.min(1, loud * 1.4)
+    const tint = Math.min(1, 0.4 + treble * 0.9)
 
     ctx.globalCompositeOperation = 'lighter' // additive glow
     for (const part of this._p) {
-      const dx = part.x - cx
-      const dy = part.y - cy
-      const dist = Math.hypot(dx, dy) || 1
-      // radial push from bass
-      part.vx += (dx / dist) * push * 0.22
-      part.vy += (dy / dist) * push * 0.22
-      // tangential swirl from treble
-      const ang = Math.atan2(dy, dx) + Math.PI / 2
-      part.vx += Math.cos(ang) * swirl
-      part.vy += Math.sin(ang) * swirl
-      // gentle pull home so the field doesn't blow apart
-      part.vx -= (dx / dist) * 0.06
-      part.vy -= (dy / dist) * 0.06
-
+      // Curl flow field from position — smooth swirls that fill the canvas.
+      const a = Math.sin(part.x * swirl + time) + Math.cos(part.y * swirl - time) + part.seed
+      let dvx = Math.cos(a) * flow
+      let dvy = Math.sin(a) * flow
+      // On a beat, add a transient shove outward from center.
+      if (kick > 0.01) {
+        const dx = part.x - cx
+        const dy = part.y - cy
+        const dist = Math.hypot(dx, dy) || 1
+        dvx += (dx / dist) * kick
+        dvy += (dy / dist) * kick
+      }
+      part.vx += (dvx - part.vx) * 0.1
+      part.vy += (dvy - part.vy) * 0.1
       part.x += part.vx
       part.y += part.vy
-      part.vx *= 0.95
-      part.vy *= 0.95
+      // Seamless toroidal wrap.
+      part.x = ((part.x % w) + w) % w
+      part.y = ((part.y % h) + h) % h
 
-      if (part.x < 0) part.x += w
-      else if (part.x > w) part.x -= w
-      if (part.y < 0) part.y += h
-      else if (part.y > h) part.y -= h
-
-      const speed = Math.min(1, Math.hypot(part.vx, part.vy) / 3)
-      const radius = part.r * scale * (1.4 + energy * 3.6)
-      ctx.fillStyle = heat(Math.min(1, 0.45 + tint * 0.35 + speed * 0.5))
+      const speed = Math.hypot(part.vx, part.vy)
+      const norm = Math.min(1, speed / (6 * scale))
+      const radius = part.r * scale * (1.3 + loud * 2.6 + beat * 3.2)
+      ctx.fillStyle = heat(Math.min(1, 0.44 + tint * 0.3 + norm * 0.42))
       ctx.beginPath()
       ctx.arc(part.x, part.y, radius, 0, Math.PI * 2)
       ctx.fill()

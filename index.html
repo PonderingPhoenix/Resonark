@@ -30,11 +30,11 @@
         <!-- Idle / "press play" hint -->
         <div id="hint" class="hint">
           <h1>EchoVault</h1>
-          <p>A music visualizer &amp; spectral vault. Load a track or use your mic to begin.</p>
+          <p>See your music come alive — then save how it sounds. Play a song or turn on your mic to begin.</p>
           <div class="hint-actions">
-            <button class="btn primary" data-action="pick-file">Open audio file</button>
-            <button class="btn" data-action="use-mic">Use microphone</button>
-            <button class="btn" data-action="use-system" id="system-btn-hint">Capture system audio</button>
+            <button class="btn primary" data-action="pick-file">🎵 Play a song</button>
+            <button class="btn" data-action="use-mic">🎤 Use microphone</button>
+            <button class="btn" data-action="use-system" id="system-btn-hint">🖥 This device's sound</button>
           </div>
         </div>
       </main>
@@ -67,7 +67,7 @@
 
         <section class="record">
           <h2>Vault</h2>
-          <p class="muted small">Record a compact spectral fingerprint of what's playing for future analysis.</p>
+          <p class="muted small">Save a snapshot of how this sounds — you'll build a little library over time.</p>
 
           <div id="spotify" class="spotify">
             <div class="spotify-row">
@@ -130,29 +130,29 @@
       <div id="settings-overlay" class="modal-overlay" hidden>
         <div class="modal">
           <div class="modal-head">
-            <h2>⚙ Analyzer settings</h2>
+            <h2>⚙ Settings</h2>
             <button class="btn tiny ghost" data-action="hide-settings">✕</button>
           </div>
           <div class="modal-body">
             <label class="set-row">
-              <span>FFT size <em>resolution</em></span>
+              <span>Detail <em>sharper vs. snappier</em></span>
               <select id="set-fft">
-                <option value="1024">1024</option>
-                <option value="2048">2048</option>
-                <option value="4096">4096</option>
-                <option value="8192">8192</option>
+                <option value="1024">Low</option>
+                <option value="2048">Medium</option>
+                <option value="4096">High</option>
+                <option value="8192">Max</option>
               </select>
             </label>
             <label class="set-row">
-              <span>Smoothing <em id="set-smooth-v"></em></span>
+              <span>Smoothness <em id="set-smooth-v"></em></span>
               <input id="set-smooth" type="range" min="0" max="0.95" step="0.01" />
             </label>
             <label class="set-row">
-              <span>Meter floor <em id="set-mindb-v"></em></span>
+              <span>Quiet cutoff <em id="set-mindb-v"></em></span>
               <input id="set-mindb" type="range" min="-120" max="-60" step="5" />
             </label>
             <label class="set-row">
-              <span>Meter ceiling <em id="set-maxdb-v"></em></span>
+              <span>Loud cutoff <em id="set-maxdb-v"></em></span>
               <input id="set-maxdb" type="range" min="-45" max="0" step="5" />
             </label>
             <label class="set-row toggle-row">
@@ -162,7 +162,7 @@
             <div class="modal-actions">
               <button class="btn tiny ghost" data-action="reset-settings">Reset to defaults</button>
             </div>
-            <p class="muted small">FFT size trades frequency resolution for responsiveness. The floor/ceiling set the dB window for the Meter's RTA and band readouts. Changes apply live and persist in this browser.</p>
+            <p class="muted small">Higher detail is sharper but a touch less snappy. The cutoffs set the loud/quiet range the Meter shows. Changes apply instantly and are remembered.</p>
             <div class="kbd-help">
               <div class="detail-chart-label">Keyboard</div>
               <div class="kbd-list">

@@ -6,7 +6,7 @@ import { heat } from '../utils/colors.js'
 // column on the right edge, then copies the whole thing to the screen.
 export const spectrogram = {
   name: 'spectrogram',
-  label: 'Spectrogram',
+  label: 'Waterfall',
   _c: null,
   _x: null,
   _w: 0,

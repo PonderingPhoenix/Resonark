@@ -21,6 +21,11 @@ const spotify = new SpotifyClient()
 let activeViz = visualizers[0]
 let vizEdges = null
 
+// Beat detection: a decaying pulse (0..1) that spikes on bass transients, so the
+// visualizers can punch on the beat.
+let bassAvg = 0
+let beat = 0
+
 // Spotify pairing state
 let currentTrack = null      // last-seen currently-playing track (from polling)
 let pendingLabelTrack = null // a track the user clicked in "Recently played"
@@ -134,6 +139,13 @@ function loop() {
   const time = engine.getTimeData()
   const bands = downsample(freq, vizEdges)
   const features = computeFeatures(freq, engine.sampleRate, engine.fftSize)
+
+  // Beat pulse from bass transients (spike above the running average → decays).
+  const bassNow = features.bass
+  bassAvg = bassAvg * 0.92 + bassNow * 0.08
+  if (bassNow > bassAvg * 1.28 && bassNow > 22 && beat < 0.55) beat = 1
+  beat = Math.max(0, beat - 0.06)
+  features.beat = beat
 
   recorder.tick(freq)
 
