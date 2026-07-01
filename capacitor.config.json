@@ -1,0 +1,9 @@
+{
+  "appId": "com.echovault.app",
+  "appName": "EchoVault",
+  "webDir": "dist",
+  "backgroundColor": "#05060a",
+  "android": {
+    "backgroundColor": "#05060a"
+  }
+}
