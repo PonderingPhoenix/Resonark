@@ -30,8 +30,10 @@ export const particles = {
     this._h = h
   },
 
-  draw({ ctx, w, h, features, t }) {
+  draw({ ctx, w, h, features, t, viz }) {
     if (!this._p || this._w !== w || this._h !== h) this._init(w, h)
+    const palette = viz?.palette
+    const size = viz?.size || 1
     const scale = Math.max(1, Math.min(w, h) / 520)
 
     ctx.globalCompositeOperation = 'source-over'
@@ -73,8 +75,8 @@ export const particles = {
 
       const speed = Math.hypot(part.vx, part.vy)
       const norm = Math.min(1, speed / (6 * scale))
-      const radius = part.r * scale * (1.3 + loud * 2.6 + beat * 3.2)
-      ctx.fillStyle = heat(Math.min(1, 0.44 + tint * 0.3 + norm * 0.42))
+      const radius = part.r * scale * size * (1.3 + loud * 2.6 + beat * 3.2)
+      ctx.fillStyle = heat(Math.min(1, 0.44 + tint * 0.3 + norm * 0.42), palette)
       ctx.beginPath()
       ctx.arc(part.x, part.y, radius, 0, Math.PI * 2)
       ctx.fill()

@@ -7,15 +7,18 @@ export const radial = {
   desc: 'Frequencies bloom outward from a core that throbs to the bass and spins with the treble.',
   _rot: 0,
 
-  draw({ ctx, w, h, bands, features }) {
+  draw({ ctx, w, h, bands, features, viz }) {
     ctx.fillStyle = 'rgba(5,6,10,0.28)' // light trails
     ctx.fillRect(0, 0, w, h)
 
+    const palette = viz?.palette
+    const size = viz?.size || 1
     const cx = w / 2
     const cy = h / 2
     const n = bands.length
     const baseR = Math.min(w, h) * 0.16
-    const maxLen = Math.min(w, h) * 0.34
+    const maxLen = Math.min(w, h) * 0.34 * (0.7 + size * 0.3)
+    const coreHue = bandHue(0, n, palette)
     const bass = (features?.bass || 0) / 255
     const treble = (features?.treble || 0) / 255
     const beat = features?.beat || 0
@@ -36,10 +39,10 @@ export const radial = {
         const idx = half === 0 ? i : n - 1 - i
         const a = ((half * n + i) / (2 * n)) * Math.PI * 2 - Math.PI / 2
         const len = pulse + v * maxLen
-        const hue = bandHue(idx, n)
+        const hue = bandHue(idx, n, palette)
 
         ctx.strokeStyle = `hsl(${hue} 92% ${40 + v * 35 + beat * 12}%)`
-        ctx.lineWidth = Math.max(1.5, (Math.PI * 2 * pulse) / (2 * n) * 0.7)
+        ctx.lineWidth = Math.max(1.5, (Math.PI * 2 * pulse) / (2 * n) * 0.7 * size)
         ctx.beginPath()
         ctx.moveTo(Math.cos(a) * pulse, Math.sin(a) * pulse)
         ctx.lineTo(Math.cos(a) * len, Math.sin(a) * len)
@@ -49,8 +52,8 @@ export const radial = {
 
     // glowing core
     const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, pulse)
-    glow.addColorStop(0, `hsl(${200 + bass * 80 + beat * 40} 95% 72% / ${0.5 + bass * 0.35 + beat * 0.3})`)
-    glow.addColorStop(1, 'hsl(220 90% 50% / 0)')
+    glow.addColorStop(0, `hsl(${coreHue} 95% 72% / ${0.5 + bass * 0.35 + beat * 0.3})`)
+    glow.addColorStop(1, `hsl(${coreHue} 90% 50% / 0)`)
     ctx.fillStyle = glow
     ctx.beginPath()
     ctx.arc(0, 0, pulse, 0, Math.PI * 2)

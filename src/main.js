@@ -10,6 +10,8 @@ import { renderHistory, exportAll } from './ui/history.js'
 import { renderAnalytics } from './ui/analytics.js'
 import { SpotifyClient } from './integrations/spotify.js'
 import { loadSettings, saveSettings, DEFAULT_SETTINGS } from './settings.js'
+import { PALETTES } from './utils/colors.js'
+import { applyFocus, FOCUS_MODES } from './utils/focus.js'
 
 const VIZ_BANDS = 96 // bands used for display (the vault stores 64 separately)
 
@@ -20,6 +22,10 @@ const spotify = new SpotifyClient()
 
 let activeViz = visualizers[0]
 let vizEdges = null
+
+// Live visualizer options (color palette + element size); kept in sync with
+// settings so the render loop can read them without re-allocating each frame.
+const vizOpts = { palette: settings.palette, size: settings.vizSize }
 
 // Beat detection: a decaying pulse (0..1) that spikes on bass transients, so the
 // visualizers can punch on the beat.
@@ -119,6 +125,54 @@ function updateModeDesc() {
   if (modeDesc) modeDesc.textContent = activeViz.desc || ''
 }
 
+// ---- Visualizer options: color palette, size, frequency focus ----
+const paletteSwatches = $('#palette-swatches')
+const optSize = $('#opt-size')
+const optFocus = $('#opt-focus')
+
+const swatchGradient = (pal) =>
+  `linear-gradient(90deg, ${pal.stops.map(([pos, [r, g, b]]) => `rgb(${r},${g},${b}) ${Math.round(pos * 100)}%`).join(', ')})`
+
+function persist(patch) {
+  const next = saveSettings({ ...settings, ...patch })
+  Object.assign(settings, next)
+  return next
+}
+
+function buildVizOptions() {
+  Object.entries(PALETTES).forEach(([key, pal]) => {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'swatch' + (key === settings.palette ? ' active' : '')
+    b.style.background = swatchGradient(pal)
+    b.title = pal.label
+    b.setAttribute('aria-label', `${pal.label} colors`)
+    b.addEventListener('click', () => {
+      persist({ palette: key })
+      vizOpts.palette = settings.palette
+      paletteSwatches.querySelectorAll('.swatch').forEach((x) => x.classList.remove('active'))
+      b.classList.add('active')
+    })
+    paletteSwatches.append(b)
+  })
+
+  Object.entries(FOCUS_MODES).forEach(([key, m]) => {
+    const o = document.createElement('option')
+    o.value = key
+    o.textContent = m.label
+    optFocus.append(o)
+  })
+  optFocus.value = settings.focus
+  optSize.value = String(settings.vizSize)
+
+  optSize.addEventListener('input', () => {
+    persist({ vizSize: Number(optSize.value) })
+    vizOpts.size = settings.vizSize
+  })
+  optFocus.addEventListener('change', () => { persist({ focus: optFocus.value }) })
+}
+buildVizOptions()
+
 // The Meter mode draws its own readouts on the canvas, so the DOM overlay
 // (brand + meter bars) would collide with it — hide the overlay in Meter mode.
 function applyOverlay() {
@@ -164,6 +218,7 @@ function loop() {
   const freq = engine.getFrequencyData()
   const time = engine.getTimeData()
   const bands = downsample(freq, vizEdges)
+  applyFocus(bands, settings.focus) // emphasize bass / vocals / treble if chosen
   const features = computeFeatures(freq, engine.sampleRate, engine.fftSize)
 
   // Beat pulse from bass transients (spike above the running average → decays).
@@ -181,7 +236,7 @@ function loop() {
     minDb: engine.minDecibels,
     maxDb: engine.maxDecibels,
   }
-  activeViz.draw({ ctx, w: canvas.width, h: canvas.height, freq, time, bands, features, audio, t: performance.now() })
+  activeViz.draw({ ctx, w: canvas.width, h: canvas.height, freq, time, bands, features, audio, viz: vizOpts, t: performance.now() })
   updateReadouts(features)
 
   // transport + recording UI
@@ -463,6 +518,7 @@ function syncSettingsUI() {
 }
 function applySettings() {
   const next = saveSettings({
+    ...settings, // preserve palette / size / focus when analyzer settings change
     fftSize: Number(setFft.value),
     smoothing: Number(setSmooth.value),
     minDb: Number(setMinDb.value),

@@ -1,3 +1,5 @@
+import { bandHue } from '../utils/colors.js'
+
 // Oscilloscope: the raw time-domain waveform, with a soft glow and a faint
 // mirrored reflection. Reads the analyser's byte time-domain data (centered at 128).
 export const oscilloscope = {
@@ -5,17 +7,19 @@ export const oscilloscope = {
   label: 'Wave',
   desc: "The raw sound wave, drawn live — the actual shape of what you're hearing.",
 
-  draw({ ctx, w, h, time, features }) {
+  draw({ ctx, w, h, time, features, viz }) {
     ctx.fillStyle = 'rgba(5,6,10,0.35)'
     ctx.fillRect(0, 0, w, h)
 
+    const palette = viz?.palette
+    const size = viz?.size || 1
     const n = time.length
     const mid = h / 2
-    const amp = h * 0.42
+    const amp = h * 0.42 * (0.7 + size * 0.3)
     const loud = (features?.rms || 0) / 255
-    const hue = 190 + loud * 90
+    const hue = bandHue(loud * 10, 11, palette) // palette sweep, brighter when loud
 
-    ctx.lineWidth = Math.max(1.5, h * 0.004)
+    ctx.lineWidth = Math.max(1.5, h * 0.004) * size
     ctx.strokeStyle = `hsl(${hue} 90% 60%)`
     ctx.shadowBlur = 16
     ctx.shadowColor = `hsl(${hue} 95% 55%)`
