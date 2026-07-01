@@ -42,6 +42,8 @@
       </main>
 
       <aside id="panel">
+        <button id="install-btn" class="btn tiny install-btn" data-action="install-app" hidden>⬇ Install EchoVault as an app</button>
+
         <section class="source">
           <div class="section-head">
             <h2>Source</h2>
@@ -153,6 +155,26 @@
             <button class="btn tiny ghost" data-action="hide-detail">✕</button>
           </div>
           <div id="detail-body" class="modal-body"></div>
+        </div>
+      </div>
+
+      <div id="install-hint-overlay" class="modal-overlay" hidden>
+        <div class="modal">
+          <div class="modal-head">
+            <h2>Add to Home Screen</h2>
+            <button class="btn tiny ghost" data-action="hide-install-hint">✕</button>
+          </div>
+          <div class="modal-body">
+            <p>To install EchoVault on your iPhone or iPad:</p>
+            <ol class="intro-steps">
+              <li><span class="intro-emoji">⬆️</span><div>Tap the <b>Share</b> button in Safari's toolbar.</div></li>
+              <li><span class="intro-emoji">➕</span><div>Choose <b>Add to Home Screen</b>.</div></li>
+              <li><span class="intro-emoji">✅</span><div>Tap <b>Add</b> — EchoVault opens full-screen, like a native app.</div></li>
+            </ol>
+            <div class="modal-actions">
+              <button class="btn primary" data-action="hide-install-hint">Got it</button>
+            </div>
+          </div>
         </div>
       </div>
 
