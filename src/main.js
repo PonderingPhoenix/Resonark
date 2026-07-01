@@ -51,6 +51,8 @@ const ctx = canvas.getContext('2d')
 const hint = $('#hint')
 const overlay = $('#overlay')
 const readouts = $('#readouts')
+const nowBar = $('#now-bar')
+const nowBarText = $('#now-bar-text')
 const overlayMeters = {
   loudness: $('[data-meter="loudness"]'),
   brightness: $('[data-meter="brightness"]'),
@@ -273,6 +275,30 @@ function setMeter(el, value) {
   if (el) el.style.transform = `scaleX(${Math.max(0, Math.min(1, value))})`
 }
 
+// Show a small "now playing" pill with the best-known current track — the one
+// being recorded, else the Spotify now-playing. Cheap: only touches the DOM when
+// the label or recording state actually changes.
+let _lastNow = ''
+function updateNowBar() {
+  if (activeViz.name === 'meter') { if (!nowBar.hidden) { nowBar.hidden = true; _lastNow = '' } return }
+  const rec = recorder.recording
+  const t = recordingTrack || currentTrack
+  let title = t?.title
+  let artist = t?.artist
+  // While recording without a resolved track, fall back to what the user typed.
+  if (!title && rec) {
+    const mt = npTitle.value.trim()
+    if (mt) { title = mt; artist = npArtist.value.trim() }
+  }
+  const label = title ? (artist ? `${title} — ${artist}` : title) : ''
+  const key = `${label}|${rec}`
+  if (key === _lastNow) return
+  _lastNow = key
+  nowBar.hidden = !label
+  nowBar.classList.toggle('recording', rec)
+  nowBarText.textContent = label
+}
+
 function updateReadouts(f) {
   setMeter(overlayMeters.loudness, f.rms / 255)
   // map centroid (Hz) to 0..1 on a log scale up to ~8kHz for a useful range
@@ -348,6 +374,7 @@ function loop() {
   }
   activeViz.draw({ ctx, w: canvas.width, h: canvas.height, freq, time, bands, features, audio, viz: vizOpts, t: performance.now() })
   updateReadouts(features)
+  updateNowBar()
 
   // transport + recording UI
   if (engine.sourceType === 'file' && engine.mediaEl) {
@@ -368,6 +395,7 @@ function setLive(active, label = '') {
   sourceName.textContent = label
   sourceName.classList.toggle('live', !!active)
   idleHint.hidden = !!active
+  if (!active) { nowBar.hidden = true; _lastNow = '' } // clear the pill when idle
 }
 
 // ---- Source handling ----

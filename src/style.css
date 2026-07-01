@@ -283,6 +283,25 @@ body { overflow: hidden; }
 }
 .bulk-count { flex: 1; font-size: 12px; font-weight: 600; color: #cfe4ff; }
 
+/* ---- Now-playing pill (overlaid, top-center of the stage) ---- */
+.now-bar {
+  position: absolute; z-index: 6;
+  top: calc(18px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+  max-width: min(70%, 460px);
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 14px; border-radius: 999px;
+  background: rgba(8, 10, 18, 0.5); border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  pointer-events: none; user-select: none;
+}
+.now-dot { width: 8px; height: 8px; border-radius: 50%; background: #5ad1a0; flex: none; }
+.now-bar.recording .now-dot {
+  background: var(--rec);
+  box-shadow: 0 0 0 0 rgba(255, 77, 94, 0.6); animation: pulse 1.4s infinite;
+}
+.now-bar-text { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* ---- Modal (settings) ---- */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 60;
