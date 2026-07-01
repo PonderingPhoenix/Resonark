@@ -38,6 +38,7 @@ export class Recorder {
     this.perfStart = performance.now()
     this.lastCol = this.perfStart
     this.edges = makeBands(this.engine.binCount, this.engine.sampleRate, this.engine.fftSize, this.outBins)
+    this.edgeBinCount = this.engine.binCount
   }
 
   get elapsedMs() {
@@ -62,6 +63,13 @@ export class Recorder {
     a.treble += f.treble
     a.minRms = Math.min(a.minRms, f.rms)
     a.maxRms = Math.max(a.maxRms, f.rms)
+
+    // If the analyzer's FFT size changed mid-recording, the band edges were
+    // built for the old bin count — rebuild them so columns stay aligned.
+    if (this.engine.binCount !== this.edgeBinCount) {
+      this.edges = makeBands(this.engine.binCount, this.engine.sampleRate, this.engine.fftSize, this.outBins)
+      this.edgeBinCount = this.engine.binCount
+    }
 
     const now = performance.now()
     if (now - this.lastCol >= this.columnIntervalMs && this.columns.length < this.maxColumns) {

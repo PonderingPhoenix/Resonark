@@ -22,7 +22,9 @@ export function computeFeatures(freq, sampleRate, fftSize) {
   let bass = 0, mid = 0, treble = 0
   let bassN = 0, midN = 0, trebleN = 0
 
-  for (let i = 0; i < n; i++) {
+  // Skip bin 0 (DC): a DC offset would otherwise inflate bass energy and pull
+  // the centroid toward 0 Hz.
+  for (let i = 1; i < n; i++) {
     const v = freq[i]
     const f = i * hzPerBin
     sum += v
@@ -35,7 +37,7 @@ export function computeFeatures(freq, sampleRate, fftSize) {
   }
 
   return {
-    rms: Math.sqrt(sq / n),                 // loudness proxy, 0..255
+    rms: Math.sqrt(sq / Math.max(1, n - 1)), // loudness proxy, 0..255
     peak,                                   // 0..255
     centroid: sum > 0 ? weighted / sum : 0, // spectral centroid in Hz ("brightness")
     bass: bassN ? bass / bassN : 0,

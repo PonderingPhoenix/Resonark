@@ -1,4 +1,5 @@
 import { collapseSpectrogram, levelNormalize } from '../vault/analytics.js'
+import { isStrongKey } from '../vault/trackKey.js'
 import { areaCurve, divergingCurve, prepCanvas } from './charts.js'
 import { heat } from '../utils/colors.js'
 import { deleteSession } from '../vault/store.js'
@@ -36,7 +37,10 @@ function drawBigSpectro(canvas, w, h, fp) {
 }
 
 function micVsRef(session, refMap) {
-  if (session.capturePath !== 'mic' || !session.trackKey) return null
+  // Only a mic capture strongly identified (ISRC/Spotify id) against a real
+  // reference is trustworthy — mirror the analytics dashboard's confidence gate
+  // so a fuzzy name match doesn't render a confident-looking curve from noise.
+  if (session.capturePath !== 'mic' || !isStrongKey(session.trackKey)) return null
   const ref = refMap.get(session.trackKey)
   if (!ref || !ref.spectrogram || !(ref.spectrogramDims?.cols > 0)) return null
   if (!session.spectrogram || !(session.spectrogramDims?.cols > 0)) return null
@@ -45,11 +49,13 @@ function micVsRef(session, refMap) {
   const mic = levelNormalize(micRaw).curve
   const rf = levelNormalize(refRaw).curve
   const delta = new Float32Array(BINS)
+  let active = 0
   for (let b = 0; b < BINS; b++) {
     const co = micRaw[b] > 8 && refRaw[b] > 8
     delta[b] = co ? mic[b] - rf[b] : 0
+    if (co) active++
   }
-  return delta
+  return active >= 6 ? delta : null // too little overlap to be meaningful
 }
 
 export function openDetail(session, refMap, onChange) {

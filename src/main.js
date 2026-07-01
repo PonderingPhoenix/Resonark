@@ -235,6 +235,7 @@ async function updateNowPlaying() {
   if (!spotify.isConnected()) return
   try {
     const np = await spotify.getCurrentlyPlaying()
+    if (!spotify.isConnected()) return // disconnected while the request was in flight
     if (np && np.track) {
       currentTrack = np.track
       npCurrent.textContent = `${np.track.title} — ${np.track.artist}${np.isPlaying ? '' : ' (paused)'}`
@@ -579,6 +580,9 @@ window.addEventListener('keydown', (e) => {
   if (anyOverlayOpen()) return // while a modal is open, only Esc is active
 
   if (e.key === ' ') { // record / stop
+    // If a button has focus, let its native Space activation handle it — avoids
+    // double-toggling (global handler + the button's own click).
+    if (t && t.tagName === 'BUTTON') return
     e.preventDefault()
     if (engine.ready) recorder.recording ? stopRecording() : startRecording()
     return

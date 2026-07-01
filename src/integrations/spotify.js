@@ -112,12 +112,16 @@ export class SpotifyClient {
     if (!code) return false
 
     const verifier = localStorage.getItem(LS.verifier)
+    if (!verifier) {
+      history.replaceState({}, '', this.redirectUri)
+      throw new Error('Spotify sign-in could not be completed (the security verifier was lost — please try connecting again).')
+    }
     const body = new URLSearchParams({
       client_id: this.clientId,
       grant_type: 'authorization_code',
       code,
       redirect_uri: this.redirectUri,
-      code_verifier: verifier || '',
+      code_verifier: verifier,
     })
     const res = await fetch(TOKEN_URL, {
       method: 'POST',
@@ -143,7 +147,14 @@ export class SpotifyClient {
   async _accessToken() {
     const access = localStorage.getItem(LS.access)
     if (access && Date.now() < Number(localStorage.getItem(LS.expires) || 0)) return access
+    // Single-flight the refresh: concurrent callers (poll + recent list) must not
+    // each POST the refresh token — Spotify may rotate it, invalidating the other
+    // in-flight request and disconnecting a still-valid session.
+    if (!this._refreshing) this._refreshing = this._refresh().finally(() => { this._refreshing = null })
+    return this._refreshing
+  }
 
+  async _refresh() {
     const refresh = localStorage.getItem(LS.refresh)
     if (!refresh) return null
     const res = await fetch(TOKEN_URL, {
