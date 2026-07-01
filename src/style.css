@@ -226,6 +226,21 @@ body { overflow: hidden; }
 .set-row select { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; }
 .modal-actions { display: flex; justify-content: flex-end; }
 
+/* ---- Detail modal ---- */
+.detail-modal { max-width: 620px; max-height: 86vh; display: flex; flex-direction: column; }
+.detail-modal .modal-body { overflow-y: auto; gap: 8px; }
+.detail-meta { color: var(--muted); font-size: 12px; margin: 0; font-variant-numeric: tabular-nums; }
+.detail-chart-label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+.detail-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.detail-stat { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.detail-stat span { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.detail-stat b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.detail-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
+.thumb.clickable { cursor: pointer; }
+.thumb.clickable:hover { filter: brightness(1.18); }
+
+@media (max-width: 560px) { .detail-stats { grid-template-columns: repeat(2, 1fr); } }
+
 /* ---- Analytics overlay ---- */
 .analytics-overlay {
   position: fixed; inset: 0; z-index: 50;

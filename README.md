@@ -171,6 +171,7 @@ src/
     spotify.js            PKCE OAuth + currently-playing / recently-played
   ui/
     history.js            renders the vault, thumbnails, edit/delete/export/import
+    detail.js             per-session drill-in: big spectrogram, stats, coloration
     charts.js             self-drawn Canvas/DOM chart primitives (no chart lib)
     analytics.js          builds the analytics dashboard from analytics.js + charts.js
   utils/

@@ -1,5 +1,6 @@
 import { heat } from '../utils/colors.js'
 import { listSessions, deleteSession, updateSession, listReferences } from '../vault/store.js'
+import { openDetail } from './detail.js'
 
 // Renders the vault. Two kinds of entry:
 //   - captured: a real recording with its own measured spectrogram.
@@ -71,11 +72,13 @@ function card(session, refs, onChange) {
   el.className = 'card' + (isReference ? ' is-reference' : '') + (isReference && hasFp ? ' inherited' : '')
 
   const thumb = document.createElement('canvas')
-  thumb.className = 'thumb'
+  thumb.className = 'thumb clickable'
+  thumb.title = 'Open details'
   thumb.width = 240
   thumb.height = 70
   if (hasFp) drawThumb(thumb, fp)
   else drawPlaceholder(thumb, isReference ? 'no spectrum yet — capture this track' : 'no spectrum')
+  thumb.addEventListener('click', () => openDetail(session, refs, onChange))
 
   const body = document.createElement('div')
   body.className = 'card-body'
