@@ -2,7 +2,7 @@
 // mirrored reflection. Reads the analyser's byte time-domain data (centered at 128).
 export const oscilloscope = {
   name: 'oscilloscope',
-  label: 'Oscilloscope',
+  label: 'Wave',
 
   draw({ ctx, w, h, time, features }) {
     ctx.fillStyle = 'rgba(5,6,10,0.35)'
