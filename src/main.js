@@ -5,7 +5,7 @@ import { makeBands, downsample } from './vault/fingerprint.js'
 import { Recorder } from './vault/Recorder.js'
 import { saveSession, upsertReferenceFromSession, bulkImport, deleteSession } from './vault/store.js'
 import { trackKeyOf } from './vault/trackKey.js'
-import { visualizers, getVisualizer } from './visualizers/index.js'
+import { visualizers, getVisualizer, READOUT_MODES } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
 import { renderAnalytics } from './ui/analytics.js'
 import { SpotifyClient } from './integrations/spotify.js'
@@ -127,15 +127,24 @@ visualizers.forEach((v, i) => {
   const b = document.createElement('button')
   b.className = 'btn mode' + (i === 0 ? ' active' : '')
   b.textContent = v.label
-  b.addEventListener('click', () => {
-    activeViz = getVisualizer(v.name)
-    modeButtons.querySelectorAll('.mode').forEach((x) => x.classList.remove('active'))
-    b.classList.add('active')
-    applyOverlay()
-    updateModeDesc()
-  })
+  b.dataset.mode = v.name
+  b.addEventListener('click', () => selectMode(v.name))
   modeButtons.append(b)
 })
+
+function selectMode(name) {
+  activeViz = getVisualizer(name)
+  modeButtons.querySelectorAll('.mode').forEach((x) => x.classList.toggle('active', x.dataset.mode === activeViz.name))
+  applyOverlay()
+  updateModeDesc()
+}
+
+// "Surprise me" — pick a look at random so you don't have to choose.
+function surpriseMode() {
+  const others = visualizers.filter((v) => v.name !== activeViz.name)
+  const pick = others[Math.floor(Math.random() * others.length)]
+  if (pick) selectMode(pick.name)
+}
 
 // Show a plain-language description of the current visual mode under the buttons.
 function updateModeDesc() {
@@ -253,7 +262,7 @@ buildVizOptions()
 // The Meter mode draws its own readouts on the canvas, so the DOM overlay
 // (brand + meter bars) would collide with it — hide the overlay in Meter mode.
 function applyOverlay() {
-  overlay.hidden = activeViz.name === 'meter'
+  overlay.hidden = READOUT_MODES.has(activeViz.name)
 }
 
 // ---- Mobile panel drawer ----
@@ -280,7 +289,7 @@ function setMeter(el, value) {
 // the label or recording state actually changes.
 let _lastNow = ''
 function updateNowBar() {
-  if (activeViz.name === 'meter') { if (!nowBar.hidden) { nowBar.hidden = true; _lastNow = '' } return }
+  if (READOUT_MODES.has(activeViz.name)) { if (!nowBar.hidden) { nowBar.hidden = true; _lastNow = '' } return }
   const rec = recorder.recording
   const t = recordingTrack || currentTrack
   let title = t?.title
@@ -761,6 +770,18 @@ document.addEventListener('click', (e) => {
     case 'install-app':
       promptInstall()
       break
+    case 'surprise':
+      surpriseMode()
+      break
+    case 'toggle-customize': {
+      const opts = $('#viz-opts')
+      const btn = $('#customize-toggle')
+      const show = opts.hidden
+      opts.hidden = !show
+      btn.setAttribute('aria-expanded', String(show))
+      btn.textContent = show ? 'Customize ▴' : 'Customize ▾'
+      break
+    }
     case 'bulk-select-all':
       selectShown()
       break

@@ -130,6 +130,10 @@ body { overflow: hidden; }
 .btn.mode.active { border-color: var(--accent); background: rgba(78,163,255,0.12); color: #cfe4ff; }
 .mode-desc { margin: 2px 0 0; line-height: 1.4; min-height: 2.4em; }
 
+/* ---- Visual mode extras (surprise / customize) ---- */
+.mode-extra { display: flex; gap: 8px; }
+.mode-extra .btn { flex: 1; }
+
 /* ---- Visualizer options (colors / size / focus) ---- */
 .viz-opts { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
 .opt-row { display: flex; align-items: center; gap: 10px; }
