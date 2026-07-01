@@ -417,6 +417,34 @@ h2, p { line-height: 1.4; }
   }
 }
 
+/* ---- Touch / app polish (heading toward a native wrapper) ---- */
+/* No tap-flash, no double-tap zoom delay, no rubber-band pull-to-refresh. */
+html, body { overscroll-behavior: none; }
+button, a, label, select, input, .swatch, [data-action] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+/* App chrome shouldn't be text-selectable on long-press; inputs still are. */
+.btn, .mode, h1, h2, h3, label, .chip, kbd, .brand, .readouts, .panel-toggle, .intro-steps {
+  -webkit-user-select: none;
+  user-select: none;
+}
+input, textarea, .card-title, .card-artist { -webkit-user-select: text; user-select: text; }
+
+/* On touch devices, grow tap targets to a comfortable minimum (~44px). */
+@media (pointer: coarse) {
+  .btn { min-height: 44px; }
+  .btn.tiny { min-height: 38px; padding: 8px 12px; }
+  .btn.icon, .btn.tiny.icon { min-width: 44px; min-height: 44px; }
+  .modal-head .btn.tiny { min-width: 40px; min-height: 40px; }
+  .swatch { width: 40px; height: 30px; }
+  .toggle input, .auto-cap input, .set-row.toggle-row input[type="checkbox"] {
+    width: 22px; height: 22px;
+  }
+  /* Keyboard shortcuts are meaningless without a keyboard — hide on touch. */
+  .kbd-help { display: none; }
+}
+
 /* Respect device safe areas (notches / home indicators) when wrapped natively
    with Capacitor or installed as a PWA in standalone mode. */
 @supports (padding: env(safe-area-inset-top)) {
