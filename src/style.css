@@ -326,6 +326,17 @@ kbd {
 .dm-text { display: flex; flex-direction: column; gap: 2px; }
 .dm-text b { font-size: 15px; }
 .dm-blurb { font-size: 12px; color: var(--muted); }
+
+/* ---- Auto-capture toggle ---- */
+.auto-cap { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text); cursor: pointer; line-height: 1.35; }
+.auto-cap input { margin-top: 2px; accent-color: #1db954; flex: none; }
+.auto-cap b { font-weight: 600; }
+.auto-cap-status { margin: 0; display: flex; align-items: center; gap: 7px; }
+.auto-cap-status::before {
+  content: ''; width: 8px; height: 8px; border-radius: 50%; background: #1db954; flex: none;
+  box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.6); animation: pulse 1.4s infinite;
+}
+.auto-cap-status.armed::before { animation: none; background: #7f8aa3; box-shadow: none; }
 .thumb.clickable { cursor: pointer; }
 .thumb.clickable:hover { filter: brightness(1.18); }
 
