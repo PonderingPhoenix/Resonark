@@ -224,7 +224,18 @@ body { overflow: hidden; }
 .set-row em { color: var(--muted); font-style: normal; font-size: 11px; font-variant-numeric: tabular-nums; }
 .set-row select, .set-row input[type="range"] { width: 100%; accent-color: var(--accent); }
 .set-row select { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; }
+.set-row.toggle-row { flex-direction: row; align-items: center; justify-content: space-between; }
+.set-row.toggle-row input[type="checkbox"] { width: auto; accent-color: #1db954; }
 .modal-actions { display: flex; justify-content: flex-end; }
+
+/* ---- Live / idle listening indicator ---- */
+#source-name.live { color: var(--text); }
+#source-name.live::before {
+  content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: #1db954; margin-right: 7px; vertical-align: middle;
+  box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.6); animation: pulse 1.4s infinite;
+}
+.idle-hint { margin: 2px 0 0; opacity: 0.75; }
 .kbd-help { border-top: 1px solid var(--line); padding-top: 12px; }
 .kbd-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--muted); }
 kbd {
