@@ -7,6 +7,7 @@ import { heat } from '../utils/colors.js'
 export const particles = {
   name: 'particles',
   label: 'Particles',
+  desc: 'A field of glowing particles that drift with the music and burst outward on every beat.',
   _p: null,
   _w: 0,
   _h: 0,

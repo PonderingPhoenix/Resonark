@@ -4,6 +4,7 @@ import { bandHue } from '../utils/colors.js'
 export const radial = {
   name: 'radial',
   label: 'Bloom',
+  desc: 'Frequencies bloom outward from a core that throbs to the bass and spins with the treble.',
   _rot: 0,
 
   draw({ ctx, w, h, bands, features }) {

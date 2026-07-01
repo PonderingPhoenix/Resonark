@@ -43,7 +43,10 @@
         <section class="source">
           <div class="section-head">
             <h2>Source</h2>
-            <button class="btn tiny ghost icon" data-action="show-settings" title="Analyzer settings">⚙</button>
+            <div class="head-actions">
+              <button class="btn tiny ghost icon" data-action="show-intro" title="How EchoVault works">ⓘ</button>
+              <button class="btn tiny ghost icon" data-action="show-settings" title="Analyzer settings">⚙</button>
+            </div>
           </div>
           <div class="row">
             <button class="btn" data-action="pick-file">📁 File</button>
@@ -63,6 +66,7 @@
         <section class="modes">
           <h2>Visual mode</h2>
           <div id="mode-buttons" class="mode-grid"></div>
+          <p id="mode-desc" class="muted small mode-desc"></p>
         </section>
 
         <section class="record">
@@ -127,6 +131,27 @@
         </div>
       </div>
 
+      <div id="intro-overlay" class="modal-overlay" hidden>
+        <div class="modal intro-modal">
+          <div class="modal-head">
+            <h2>Welcome to EchoVault 🔊</h2>
+            <button class="btn tiny ghost" data-action="hide-intro">✕</button>
+          </div>
+          <div class="modal-body">
+            <p class="intro-lead">EchoVault turns any sound into live visuals — and quietly builds a little library of how your music <em>sounds</em>, so you can look back on it later.</p>
+            <ol class="intro-steps">
+              <li><span class="intro-emoji">🎵</span><div><b>Pick a source.</b> Play a music file, use your microphone, or capture this device's own sound.</div></li>
+              <li><span class="intro-emoji">🎨</span><div><b>Watch it react.</b> Switch between visual modes — Bars, Particles, Bloom and more. They dance to the beat.</div></li>
+              <li><span class="intro-emoji">💾</span><div><b>Save a snapshot.</b> Hit <b>Record</b> to store a "fingerprint" of a track. Your vault grows, and you can compare how songs sound across plays and devices.</div></li>
+            </ol>
+            <p class="muted small">Reopen this anytime with the <b>ⓘ</b> button up top. No account needed — everything stays on your device.</p>
+            <div class="modal-actions">
+              <button class="btn primary" data-action="hide-intro">Got it — let's go</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div id="settings-overlay" class="modal-overlay" hidden>
         <div class="modal">
           <div class="modal-head">
@@ -169,7 +194,7 @@
                 <span><kbd>Space</kbd> record / stop</span>
                 <span><kbd>F</kbd> <kbd>M</kbd> <kbd>S</kbd> file / mic / system</span>
                 <span><kbd>1</kbd>–<kbd>6</kbd> visual mode</span>
-                <span><kbd>A</kbd> analytics · <kbd>Esc</kbd> close</span>
+                <span><kbd>A</kbd> analytics · <kbd>H</kbd> help · <kbd>Esc</kbd> close</span>
               </div>
             </div>
           </div>

@@ -16,6 +16,7 @@ const fmtCenter = (c) => (c >= 1000 ? `${c / 1000 % 1 === 0 ? c / 1000 : (c / 10
 export const meter = {
   name: 'meter',
   label: 'Meter',
+  desc: 'The technical readout: exact loudness, the dominant note, and a studio-style frequency analyzer.',
   _peakDb: -100,
 
   draw({ ctx, w, h, freq, time, features, audio }) {

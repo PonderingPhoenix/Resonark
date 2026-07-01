@@ -36,6 +36,15 @@ body { overflow: hidden; }
   left: 18px;
   pointer-events: none;
   user-select: none;
+  /* Glass backing so the readouts stay legible over any visualizer (the Bars
+     used to punch straight through the text). Shrinks to fit its content. */
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: rgba(8, 10, 18, 0.44);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
 }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: 0.3px; }
 .brand-mark { font-size: 20px; }
@@ -103,6 +112,7 @@ body { overflow: hidden; }
 .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .btn.mode { font-size: 13px; padding: 10px; text-align: center; }
 .btn.mode.active { border-color: var(--accent); background: rgba(78,163,255,0.12); color: #cfe4ff; }
+.mode-desc { margin: 2px 0 0; line-height: 1.4; min-height: 2.4em; }
 
 /* ---- Transport ---- */
 .transport { display: flex; align-items: center; gap: 10px; }
@@ -204,6 +214,7 @@ body { overflow: hidden; }
 /* ---- Section head (h2 + inline action) ---- */
 .section-head { display: flex; align-items: center; justify-content: space-between; }
 .section-head h2 { margin: 0; }
+.head-actions { display: flex; align-items: center; gap: 4px; }
 
 /* ---- Modal (settings) ---- */
 .modal-overlay {
@@ -227,6 +238,20 @@ body { overflow: hidden; }
 .set-row.toggle-row { flex-direction: row; align-items: center; justify-content: space-between; }
 .set-row.toggle-row input[type="checkbox"] { width: auto; accent-color: #1db954; }
 .modal-actions { display: flex; justify-content: flex-end; }
+
+/* ---- Intro / "how it works" modal ---- */
+.intro-modal { max-width: 440px; }
+.intro-lead { margin: 0; font-size: 14px; line-height: 1.5; color: var(--text); }
+.intro-lead em { font-style: italic; color: #cfe4ff; }
+.intro-steps { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.intro-steps li { display: flex; gap: 12px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; color: var(--text); }
+.intro-steps b { font-weight: 700; }
+.intro-emoji {
+  flex: none; width: 34px; height: 34px; border-radius: 10px;
+  display: grid; place-items: center; font-size: 18px;
+  background: var(--panel-2); border: 1px solid var(--line);
+}
+.intro-modal .modal-actions { margin-top: 2px; }
 
 /* ---- Live / idle listening indicator ---- */
 #source-name.live { color: var(--text); }
