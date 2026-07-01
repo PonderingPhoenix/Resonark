@@ -226,6 +226,10 @@ export async function renderHistory(listEl, opts = {}) {
   const [sessions, references] = await Promise.all([listSessions(), listReferences()])
   const refs = new Map(references.map((r) => [r.trackKey, r]))
 
+  // Hide the vault-management tools until there's something to manage.
+  const section = listEl.closest('.history')
+  if (section) section.classList.toggle('empty', sessions.length === 0)
+
   // Drop any selected ids that no longer exist (deleted elsewhere), then let the
   // bulk bar re-sync from the pruned set below.
   if (opts.selection) {

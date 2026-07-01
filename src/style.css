@@ -287,6 +287,14 @@ body { overflow: hidden; }
 }
 .bulk-count { flex: 1; font-size: 12px; font-weight: 600; color: #cfe4ff; }
 
+/* Until the vault has something in it, hide the management tools (Analytics,
+   Select, Export, search, mood filter) so a first-time user isn't faced with a
+   row of options for an empty list. Import stays available. */
+.history.empty .history-filter { display: none; }
+.history.empty [data-action="show-analytics"],
+.history.empty [data-action="bulk-select-all"],
+.history.empty [data-action="export-all"] { display: none; }
+
 /* ---- Now-playing pill (overlaid, top-center of the stage) ---- */
 .now-bar {
   position: absolute; z-index: 6;
