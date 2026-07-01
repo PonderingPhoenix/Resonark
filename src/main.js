@@ -12,6 +12,7 @@ import { SpotifyClient } from './integrations/spotify.js'
 import { loadSettings, saveSettings, DEFAULT_SETTINGS } from './settings.js'
 import { PALETTES } from './utils/colors.js'
 import { applyFocus, FOCUS_MODES } from './utils/focus.js'
+import { createAutoState, stepAuto } from './vault/autoCapture.js'
 
 const VIZ_BANDS = 96 // bands used for display (the vault stores 64 separately)
 
@@ -31,6 +32,10 @@ const vizOpts = { palette: settings.palette, size: settings.vizSize }
 // visualizers can punch on the beat.
 let bassAvg = 0
 let beat = 0
+
+// Always-on auto-capture: a pure state machine + a timestamp for the frame delta.
+const autoState = createAutoState()
+let lastAutoTs = 0
 
 // Spotify pairing state
 let currentTrack = null      // last-seen currently-playing track (from polling)
@@ -60,6 +65,8 @@ const timeLabel = $('#time')
 const sourceName = $('#source-name')
 const recordBtn = $('#record-btn')
 const recTimer = $('#rec-timer')
+const autoCaptureInput = $('#auto-capture')
+const autoCapStatus = $('#auto-cap-status')
 const historyList = $('#history-list')
 const connectBtn = $('[data-action="spotify-connect"]')
 const disconnectBtn = $('[data-action="spotify-disconnect"]')
@@ -227,6 +234,22 @@ function loop() {
   if (bassNow > bassAvg * 1.28 && bassNow > 22 && beat < 0.55) beat = 1
   beat = Math.max(0, beat - 0.06)
   features.beat = beat
+
+  // Always-on auto-capture: let the state machine decide when a song starts/ends.
+  if (settings.autoCapture) {
+    const now = performance.now()
+    const dt = lastAutoTs ? now - lastAutoTs : 0
+    lastAutoTs = now
+    // Keep the machine consistent if the user manually toggled Record underneath it.
+    if (autoState.phase === 'recording' && !recorder.recording) { autoState.phase = 'idle'; autoState.armMs = 0 }
+    const action = stepAuto(autoState, features.rms, dt)
+    if (action === 'start' && !recorder.recording) startRecording(spotify.isConnected() ? currentTrack : null)
+    else if (action === 'stop' && recorder.recording) stopRecording()
+    else if (action === 'cancel' && recorder.recording) cancelRecording()
+    updateAutoStatus()
+  } else {
+    lastAutoTs = 0
+  }
 
   recorder.tick(freq)
 
@@ -473,20 +496,53 @@ async function stopRecording() {
   recentList.querySelectorAll('.recent-item.selected').forEach((x) => x.classList.remove('selected'))
 }
 
-function startRecording() {
+function startRecording(explicitTrack = null) {
   if (!engine.ready) {
     alert('Start an audio source first (file or mic).')
     return
   }
-  // Snapshot the track to attach: an explicitly-clicked recent track wins,
-  // else the currently-playing track if auto-label is on.
-  recordingTrack = pendingLabelTrack || (autolabelInput.checked ? currentTrack : null)
+  // Snapshot the track to attach: an explicit track (auto-capture's now-playing,
+  // or a clicked recent track) wins, else the currently-playing track if
+  // auto-label is on.
+  recordingTrack = explicitTrack || pendingLabelTrack || (autolabelInput.checked ? currentTrack : null)
   recorder.start()
   recordBtn.classList.add('recording')
   recTimer.hidden = false
   recTimer.textContent = '0:00'
   recordBtn.querySelector('.rec-label').textContent = 'Stop'
 }
+
+// Discard the in-progress recording without saving (auto-capture uses this to
+// drop segments too short to be a real song — ads, talking, false starts).
+function cancelRecording() {
+  recorder.reset()
+  recordingTrack = null
+  recordBtn.classList.remove('recording')
+  recTimer.hidden = true
+  recordBtn.querySelector('.rec-label').textContent = 'Record'
+}
+
+function updateAutoStatus() {
+  if (!settings.autoCapture) { autoCapStatus.hidden = true; return }
+  autoCapStatus.hidden = false
+  const rec = recorder.recording
+  autoCapStatus.classList.toggle('armed', !rec)
+  autoCapStatus.textContent = !engine.ready
+    ? 'Waiting for a source — auto-capture begins when audio plays.'
+    : rec ? 'Recording this song…' : 'Listening for the next song…'
+}
+
+function setAutoCapture(on) {
+  persist({ autoCapture: on })
+  autoCaptureInput.checked = settings.autoCapture
+  Object.assign(autoState, createAutoState()) // start clean each time it's toggled
+  lastAutoTs = 0
+  if (!settings.autoCapture && recorder.recording) stopRecording() // finalize the current song on the way out
+  updateAutoStatus()
+}
+autoCaptureInput.addEventListener('change', () => setAutoCapture(autoCaptureInput.checked))
+autoCaptureInput.checked = settings.autoCapture
+updateAutoStatus()
 
 // ---- Analytics ----
 function renderAnalyticsView() {
