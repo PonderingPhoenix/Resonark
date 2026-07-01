@@ -8,25 +8,29 @@ export const bars = {
   desc: 'A classic equalizer — bass on the left, treble on the right. Bars jump and glow on the beat.',
   _peaks: null,
 
-  draw({ ctx, w, h, bands, features }) {
+  draw({ ctx, w, h, bands, features, viz }) {
     const beat = features?.beat || 0
+    const palette = viz?.palette
+    const size = viz?.size || 1
+
+    const n = bands.length
+    if (!this._peaks || this._peaks.length !== n) this._peaks = new Float32Array(n)
+    const glowHue = bandHue(Math.floor(n * 0.72), n, palette)
 
     ctx.fillStyle = '#05060a'
     ctx.fillRect(0, 0, w, h)
     if (beat > 0.04) {
       const g = ctx.createRadialGradient(w / 2, h, 0, w / 2, h, h)
-      g.addColorStop(0, `hsla(280 90% 62% / ${0.14 * beat})`)
-      g.addColorStop(1, 'hsla(280 90% 62% / 0)')
+      g.addColorStop(0, `hsla(${glowHue} 90% 62% / ${0.14 * beat})`)
+      g.addColorStop(1, `hsla(${glowHue} 90% 62% / 0)`)
       ctx.fillStyle = g
       ctx.fillRect(0, 0, w, h)
     }
 
-    const n = bands.length
-    if (!this._peaks || this._peaks.length !== n) this._peaks = new Float32Array(n)
     const gap = Math.max(1, w * 0.0015)
     const bw = w / n
     const baseY = h * 0.94
-    const maxH = h * 0.86
+    const maxH = h * 0.86 * (0.7 + size * 0.3)
 
     for (let i = 0; i < n; i++) {
       let v = bands[i] / 255
@@ -34,7 +38,7 @@ export const bars = {
       const bh = v * maxH * (1 + beat * 0.12)
       const x = i * bw + gap
       const bwid = bw - gap * 2
-      const hue = bandHue(i, n)
+      const hue = bandHue(i, n, palette)
 
       const grad = ctx.createLinearGradient(0, baseY, 0, baseY - bh)
       grad.addColorStop(0, `hsl(${hue} 85% ${24 + beat * 10}%)`)

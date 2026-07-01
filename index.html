@@ -72,6 +72,20 @@
           <h2>Visual mode</h2>
           <div id="mode-buttons" class="mode-grid"></div>
           <p id="mode-desc" class="muted small mode-desc"></p>
+          <div class="viz-opts">
+            <div class="opt-row">
+              <span class="opt-label">Colors</span>
+              <div id="palette-swatches" class="swatches"></div>
+            </div>
+            <label class="opt-row">
+              <span class="opt-label">Size</span>
+              <input id="opt-size" class="opt-range" type="range" min="0.6" max="1.6" step="0.05" />
+            </label>
+            <label class="opt-row">
+              <span class="opt-label">Focus</span>
+              <select id="opt-focus" class="opt-select"></select>
+            </label>
+          </div>
         </section>
 
         <section class="record">

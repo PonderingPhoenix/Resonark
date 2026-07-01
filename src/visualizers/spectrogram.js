@@ -28,10 +28,12 @@ export const spectrogram = {
     this._h = h
   },
 
-  draw({ ctx, w, h, bands }) {
+  draw({ ctx, w, h, bands, viz }) {
     this._ensure(w, h)
+    const palette = viz?.palette
+    const size = viz?.size || 1
     const x = this._x
-    const colW = Math.max(1, Math.round(w * 0.004))
+    const colW = Math.max(1, Math.round(w * 0.004 * size))
 
     // scroll left
     x.globalCompositeOperation = 'copy'
@@ -44,7 +46,7 @@ export const spectrogram = {
       const v = bands[i] / 255
       const y0 = h - ((i + 1) / n) * h
       const y1 = h - (i / n) * h
-      x.fillStyle = heat(v)
+      x.fillStyle = heat(v, palette)
       x.fillRect(w - colW, y0, colW, y1 - y0 + 1)
     }
 
