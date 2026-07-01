@@ -41,7 +41,10 @@
 
       <aside id="panel">
         <section class="source">
-          <h2>Source</h2>
+          <div class="section-head">
+            <h2>Source</h2>
+            <button class="btn tiny ghost icon" data-action="show-settings" title="Analyzer settings">⚙</button>
+          </div>
           <div class="row">
             <button class="btn" data-action="pick-file">📁 File</button>
             <button class="btn" data-action="use-mic">🎤 Mic</button>
@@ -112,6 +115,42 @@
           <div id="history-list" class="history-list"></div>
         </section>
       </aside>
+
+      <div id="settings-overlay" class="modal-overlay" hidden>
+        <div class="modal">
+          <div class="modal-head">
+            <h2>⚙ Analyzer settings</h2>
+            <button class="btn tiny ghost" data-action="hide-settings">✕</button>
+          </div>
+          <div class="modal-body">
+            <label class="set-row">
+              <span>FFT size <em>resolution</em></span>
+              <select id="set-fft">
+                <option value="1024">1024</option>
+                <option value="2048">2048</option>
+                <option value="4096">4096</option>
+                <option value="8192">8192</option>
+              </select>
+            </label>
+            <label class="set-row">
+              <span>Smoothing <em id="set-smooth-v"></em></span>
+              <input id="set-smooth" type="range" min="0" max="0.95" step="0.01" />
+            </label>
+            <label class="set-row">
+              <span>Meter floor <em id="set-mindb-v"></em></span>
+              <input id="set-mindb" type="range" min="-120" max="-60" step="5" />
+            </label>
+            <label class="set-row">
+              <span>Meter ceiling <em id="set-maxdb-v"></em></span>
+              <input id="set-maxdb" type="range" min="-45" max="0" step="5" />
+            </label>
+            <div class="modal-actions">
+              <button class="btn tiny ghost" data-action="reset-settings">Reset to defaults</button>
+            </div>
+            <p class="muted small">FFT size trades frequency resolution for responsiveness. The floor/ceiling set the dB window for the Meter's RTA and band readouts. Changes apply live and persist in this browser.</p>
+          </div>
+        </div>
+      </div>
 
       <div id="analytics-overlay" class="analytics-overlay" hidden>
         <div class="analytics-head">

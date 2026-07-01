@@ -9,10 +9,12 @@ import { visualizers, getVisualizer } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
 import { renderAnalytics } from './ui/analytics.js'
 import { SpotifyClient } from './integrations/spotify.js'
+import { loadSettings, saveSettings, DEFAULT_SETTINGS } from './settings.js'
 
 const VIZ_BANDS = 96 // bands used for display (the vault stores 64 separately)
 
-const engine = new AudioEngine({ fftSize: 2048, smoothing: 0.82 })
+const settings = loadSettings()
+const engine = new AudioEngine(settings)
 const recorder = new Recorder(engine)
 const spotify = new SpotifyClient()
 
@@ -62,6 +64,11 @@ const analyticsOverlay = $('#analytics-overlay')
 const analyticsBody = $('#analytics-body')
 const fileOnlyToggle = $('#an-file-only')
 const importInput = $('#import-input')
+const settingsOverlay = $('#settings-overlay')
+const setFft = $('#set-fft')
+const setSmooth = $('#set-smooth')
+const setMinDb = $('#set-mindb')
+const setMaxDb = $('#set-maxdb')
 
 // ---- Canvas sizing (device pixels for crisp rendering) ----
 function resize() {
@@ -392,6 +399,31 @@ function refreshAnalyticsIfOpen() {
 }
 fileOnlyToggle.addEventListener('change', () => { if (!analyticsOverlay.hidden) renderAnalyticsView() })
 
+// ---- Settings ----
+function syncSettingsUI() {
+  setFft.value = String(settings.fftSize)
+  setSmooth.value = String(settings.smoothing)
+  setMinDb.value = String(settings.minDb)
+  setMaxDb.value = String(settings.maxDb)
+  $('#set-smooth-v').textContent = settings.smoothing.toFixed(2)
+  $('#set-mindb-v').textContent = `${settings.minDb} dB`
+  $('#set-maxdb-v').textContent = `${settings.maxDb} dB`
+}
+function applySettings() {
+  const next = saveSettings({
+    fftSize: Number(setFft.value),
+    smoothing: Number(setSmooth.value),
+    minDb: Number(setMinDb.value),
+    maxDb: Number(setMaxDb.value),
+  })
+  Object.assign(settings, next)
+  const fftChanged = engine.configure(settings)
+  if (fftChanged) vizEdges = null // recompute display band edges for the new bin count
+  syncSettingsUI()
+}
+;[setFft, setSmooth, setMinDb, setMaxDb].forEach((el) => el.addEventListener('input', applySettings))
+syncSettingsUI()
+
 // ---- Wire up actions ----
 document.addEventListener('click', (e) => {
   const action = e.target.closest('[data-action]')?.dataset.action
@@ -425,6 +457,19 @@ document.addEventListener('click', (e) => {
       break
     case 'import-vault':
       importInput.click()
+      break
+    case 'show-settings':
+      settingsOverlay.hidden = false
+      break
+    case 'hide-settings':
+      settingsOverlay.hidden = true
+      break
+    case 'reset-settings':
+      setFft.value = String(DEFAULT_SETTINGS.fftSize)
+      setSmooth.value = String(DEFAULT_SETTINGS.smoothing)
+      setMinDb.value = String(DEFAULT_SETTINGS.minDb)
+      setMaxDb.value = String(DEFAULT_SETTINGS.maxDb)
+      applySettings()
       break
     case 'show-analytics':
       openAnalytics()
