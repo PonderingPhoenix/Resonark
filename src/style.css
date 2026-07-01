@@ -315,3 +315,20 @@ h2, p { line-height: 1.4; }
   #app { grid-template-columns: 1fr; grid-template-rows: 45vh 1fr; }
   #panel { border-left: none; border-top: 1px solid var(--line); }
 }
+
+/* Respect device safe areas (notches / home indicators) when wrapped natively
+   with Capacitor or installed as a PWA in standalone mode. */
+@supports (padding: env(safe-area-inset-top)) {
+  #panel { padding-top: calc(16px + env(safe-area-inset-top)); padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+  .overlay { top: calc(18px + env(safe-area-inset-top)); left: calc(18px + env(safe-area-inset-left)); }
+  .analytics-head { padding-top: calc(14px + env(safe-area-inset-top)); }
+  .analytics-body { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
+  .modal-head { padding-top: calc(14px + env(safe-area-inset-top)); }
+}
+@media (max-width: 760px) {
+  @supports (padding: env(safe-area-inset-top)) {
+    /* On phones the stage is on top, so the safe-area padding belongs there. */
+    #panel { padding-top: 16px; }
+    .overlay { top: calc(14px + env(safe-area-inset-top)); }
+  }
+}

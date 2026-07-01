@@ -189,11 +189,15 @@ src/
   hands-off recording of streamed audio. *(done)*
 - ✅ **Vault analytics** — trends, distributions, and the speaker/room
   coloration signature. *(done)*
-- **Last.fm / Apple Music** as alternative metadata sources.
+- 🟡 **Capacitor (mobile)** — Android/iOS project scaffolded; see
+  [`docs/CAPACITOR.md`](docs/CAPACITOR.md). Includes an Android **native
+  system-audio capture** recipe (`MediaProjection`) under
+  [`docs/native-system-audio/`](docs/native-system-audio/README.md) — the one way
+  to capture all device audio (Android only; iOS forbids it). *(scaffold done,
+  native capture is a device-build)*
+- **Last.fm** as an alternative metadata source (Apple Music can't — MusicKit
+  needs a server-signed token).
 - **Cross-user shared reference library** behind a backend.
-- **Vault analytics** — trends over time: how the brightness / dynamic range /
-  bass balance of your listening shifts week to week.
-- **Capacitor wrapper** for Android/iOS.
 
 ## License
 
