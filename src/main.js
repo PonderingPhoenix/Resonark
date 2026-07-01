@@ -84,6 +84,8 @@ const fileOnlyToggle = $('#an-file-only')
 const importInput = $('#import-input')
 const settingsOverlay = $('#settings-overlay')
 const introOverlay = $('#intro-overlay')
+const installBtn = $('#install-btn')
+const installHintOverlay = $('#install-hint-overlay')
 const modeDesc = $('#mode-desc')
 const appEl = $('#app')
 const panelToggle = $('#panel-toggle')
@@ -662,6 +664,12 @@ document.addEventListener('click', (e) => {
       introOverlay.hidden = true
       try { localStorage.setItem('ev_seen_intro', '1') } catch { /* private mode */ }
       break
+    case 'install-app':
+      promptInstall()
+      break
+    case 'hide-install-hint':
+      installHintOverlay.hidden = true
+      break
     case 'hide-detail':
       $('#detail-overlay').hidden = true
       break
@@ -761,7 +769,7 @@ seek.addEventListener('input', () => {
 })
 
 // ---- Keyboard shortcuts ----
-const overlays = () => [settingsOverlay, analyticsOverlay, introOverlay, document.getElementById('detail-overlay')]
+const overlays = () => [settingsOverlay, analyticsOverlay, introOverlay, installHintOverlay, document.getElementById('detail-overlay')]
 const anyOverlayOpen = () => overlays().some((o) => o && !o.hidden)
 const closeOverlays = () => overlays().forEach((o) => { if (o) o.hidden = true })
 
@@ -824,6 +832,34 @@ try {
     localStorage.setItem('ev_seen_intro', '1')
   }
 } catch { /* private mode — just skip the auto-intro */ }
+
+// ---- Install to home screen (PWA) ----
+// The install button only appears when the app is genuinely installable and not
+// already running standalone.
+let deferredInstall = null
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault() // suppress Chrome's default mini-infobar; we show our own button
+  deferredInstall = e
+  if (!isStandalone) installBtn.hidden = false
+})
+window.addEventListener('appinstalled', () => {
+  deferredInstall = null
+  installBtn.hidden = true
+})
+// iOS Safari never fires beforeinstallprompt — offer the manual steps instead.
+if (isIOS && !isStandalone) installBtn.hidden = false
+
+function promptInstall() {
+  if (deferredInstall) {
+    deferredInstall.prompt()
+    deferredInstall.userChoice.finally(() => { deferredInstall = null; installBtn.hidden = true })
+  } else if (isIOS) {
+    installHintOverlay.hidden = false
+  }
+}
 
 // Browsers start an AudioContext suspended until a user gesture (autoplay
 // policy). Resume it on the first interaction so an auto-started mic goes live.

@@ -251,6 +251,13 @@ body { overflow: hidden; }
 .section-head h2 { margin: 0; }
 .head-actions { display: flex; align-items: center; gap: 4px; }
 
+/* Install affordance — only shown when the app is actually installable. */
+.install-btn {
+  width: 100%; text-align: center;
+  background: rgba(78, 163, 255, 0.12); border-color: rgba(78, 163, 255, 0.4); color: #cfe4ff;
+}
+.install-btn:hover { background: rgba(78, 163, 255, 0.2); border-color: var(--accent); }
+
 /* ---- Modal (settings) ---- */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 60;
