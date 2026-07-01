@@ -152,6 +152,7 @@ app's **Set up Spotify** prompt (stored only in your browser).
 ```
 src/
   main.js                 app bootstrap, render loop, UI wiring
+  settings.js             persisted analyzer settings (FFT, smoothing, dB window)
   style.css               dark UI theme
   audio/
     AudioEngine.js        AudioContext + AnalyserNode, file/mic sources

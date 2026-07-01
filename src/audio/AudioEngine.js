@@ -3,9 +3,11 @@
 // raw FFT data the rest of the app reads each animation frame.
 
 export class AudioEngine {
-  constructor({ fftSize = 2048, smoothing = 0.8 } = {}) {
+  constructor({ fftSize = 2048, smoothing = 0.8, minDb = -100, maxDb = -30 } = {}) {
     this.fftSize = fftSize
     this.smoothing = smoothing
+    this._minDb = minDb
+    this._maxDb = maxDb
 
     this.ctx = null
     this.analyser = null
@@ -33,9 +35,37 @@ export class AudioEngine {
     this.analyser = this.ctx.createAnalyser()
     this.analyser.fftSize = this.fftSize
     this.analyser.smoothingTimeConstant = this.smoothing
+    this.analyser.minDecibels = this._minDb
+    this.analyser.maxDecibels = this._maxDb
     this.freqData = new Uint8Array(this.analyser.frequencyBinCount)
     this.timeData = new Uint8Array(this.analyser.fftSize)
     return this.ctx
+  }
+
+  /**
+   * Live-update analyzer settings. fftSize/smoothing change resolution and
+   * responsiveness; min/max dB set the meter's decibel window. Buffers are
+   * reallocated when the bin count changes. Returns true if fftSize changed
+   * (so callers can recompute band edges).
+   */
+  configure({ fftSize, smoothing, minDb, maxDb } = {}) {
+    let fftChanged = false
+    if (fftSize != null && fftSize !== this.fftSize) { this.fftSize = fftSize; fftChanged = true }
+    if (smoothing != null) this.smoothing = smoothing
+    if (minDb != null) this._minDb = minDb
+    if (maxDb != null) this._maxDb = maxDb
+    if (this.analyser) {
+      this.analyser.fftSize = this.fftSize
+      this.analyser.smoothingTimeConstant = this.smoothing
+      // maxDecibels must stay > minDecibels; set in an order that avoids a throw.
+      this.analyser.minDecibels = Math.min(this._minDb, this._maxDb - 1)
+      this.analyser.maxDecibels = Math.max(this._maxDb, this._minDb + 1)
+      if (fftChanged) {
+        this.freqData = new Uint8Array(this.analyser.frequencyBinCount)
+        this.timeData = new Uint8Array(this.analyser.fftSize)
+      }
+    }
+    return fftChanged
   }
 
   async resume() {
@@ -137,8 +167,8 @@ export class AudioEngine {
   get binCount() { return this.analyser ? this.analyser.frequencyBinCount : this.fftSize / 2 }
   // The analyser maps [minDecibels, maxDecibels] onto the 0..255 byte range;
   // the Meter mode needs these to convert byte magnitudes back to dB.
-  get minDecibels() { return this.analyser ? this.analyser.minDecibels : -100 }
-  get maxDecibels() { return this.analyser ? this.analyser.maxDecibels : -30 }
+  get minDecibels() { return this.analyser ? this.analyser.minDecibels : this._minDb }
+  get maxDecibels() { return this.analyser ? this.analyser.maxDecibels : this._maxDb }
 
   getFrequencyData() {
     if (this.analyser) this.analyser.getByteFrequencyData(this.freqData)
