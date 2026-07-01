@@ -139,6 +139,7 @@
             <h2>History</h2>
             <div class="history-actions">
               <button class="btn tiny" data-action="show-analytics" title="Open vault analytics">📊 Analytics</button>
+              <button class="btn tiny ghost" data-action="bulk-select-all" title="Select all shown for bulk actions">☑ Select</button>
               <button class="btn tiny ghost" data-action="export-all" title="Export the whole vault as JSON">Export</button>
               <button class="btn tiny ghost" data-action="import-vault" title="Import a vault export (merges, skips duplicates)">Import</button>
               <input id="import-input" type="file" accept="application/json,.json" hidden />
@@ -147,6 +148,11 @@
           <div class="history-filter">
             <input id="history-search" class="history-search" type="search" placeholder="Search title or artist…" aria-label="Search vault" />
             <select id="history-mood" class="opt-select" aria-label="Filter by mood"></select>
+          </div>
+          <div id="bulk-bar" class="bulk-bar" hidden>
+            <span id="bulk-count" class="bulk-count">0 selected</span>
+            <button class="btn tiny ghost" data-action="bulk-clear">Clear</button>
+            <button class="btn tiny ghost danger" data-action="bulk-delete">Delete selected</button>
           </div>
           <div id="history-list" class="history-list"></div>
         </section>
