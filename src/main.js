@@ -3,7 +3,7 @@ import { AudioEngine } from './audio/AudioEngine.js'
 import { computeFeatures } from './audio/features.js'
 import { makeBands, downsample } from './vault/fingerprint.js'
 import { Recorder } from './vault/Recorder.js'
-import { saveSession, upsertReferenceFromSession, bulkImport } from './vault/store.js'
+import { saveSession, upsertReferenceFromSession, bulkImport, deleteSession } from './vault/store.js'
 import { trackKeyOf } from './vault/trackKey.js'
 import { visualizers, getVisualizer } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
@@ -71,6 +71,9 @@ const autoCapStatus = $('#auto-cap-status')
 const historyList = $('#history-list')
 const historySearch = $('#history-search')
 const historyMood = $('#history-mood')
+const bulkBar = $('#bulk-bar')
+const bulkCount = $('#bulk-count')
+const vaultSelection = new Set()
 const connectBtn = $('[data-action="spotify-connect"]')
 const disconnectBtn = $('[data-action="spotify-disconnect"]')
 const autolabelWrap = $('#autolabel-wrap')
@@ -140,7 +143,44 @@ function updateModeDesc() {
 // Re-render History honoring the active search + mood filter. Every code path
 // that changes the vault goes through this so the filter is never lost.
 function refreshHistory() {
-  return renderHistory(historyList, { query: historySearch.value, mood: historyMood.value })
+  return renderHistory(historyList, {
+    query: historySearch.value,
+    mood: historyMood.value,
+    selection: vaultSelection,
+    onSelectChange: updateBulkBar,
+  })
+}
+
+function updateBulkBar() {
+  const n = vaultSelection.size
+  bulkBar.hidden = n === 0
+  bulkCount.textContent = `${n} selected`
+}
+
+async function deleteSelected() {
+  const n = vaultSelection.size
+  if (!n) return
+  if (!confirm(`Delete ${n} recording${n === 1 ? '' : 's'} from your vault? This can't be undone.`)) return
+  for (const id of vaultSelection) await deleteSession(id)
+  vaultSelection.clear()
+  await refreshHistory()
+  refreshAnalyticsIfOpen()
+  updateBulkBar()
+}
+
+function selectShown() {
+  historyList.querySelectorAll('.card-select').forEach((cb) => {
+    cb.checked = true
+    vaultSelection.add(Number(cb.dataset.id))
+    cb.closest('.card')?.classList.add('selected')
+  })
+  updateBulkBar()
+}
+
+function clearSelection() {
+  vaultSelection.clear()
+  historyList.querySelectorAll('.card-select').forEach((cb) => { cb.checked = false; cb.closest('.card')?.classList.remove('selected') })
+  updateBulkBar()
 }
 
 function buildHistoryFilter() {
@@ -692,6 +732,15 @@ document.addEventListener('click', (e) => {
       break
     case 'install-app':
       promptInstall()
+      break
+    case 'bulk-select-all':
+      selectShown()
+      break
+    case 'bulk-clear':
+      clearSelection()
+      break
+    case 'bulk-delete':
+      deleteSelected()
       break
     case 'hide-install-hint':
       installHintOverlay.hidden = true

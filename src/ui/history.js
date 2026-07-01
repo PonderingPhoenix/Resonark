@@ -63,7 +63,7 @@ function statChip(label, value) {
   return el
 }
 
-function card(session, refs, onChange) {
+function card(session, refs, onChange, opts = {}) {
   const isReference = session.kind === 'reference'
   const ref = isReference ? refs.get(session.trackKey) : null
   const fp = isReference ? ref : session // where the spectrogram + stats live
@@ -71,6 +71,24 @@ function card(session, refs, onChange) {
 
   const el = document.createElement('div')
   el.className = 'card' + (isReference ? ' is-reference' : '') + (isReference && hasFp ? ' inherited' : '')
+
+  // Multi-select checkbox (bulk vault management).
+  if (opts.selection) {
+    const sel = document.createElement('input')
+    sel.type = 'checkbox'
+    sel.className = 'card-select'
+    sel.dataset.id = session.id
+    sel.title = 'Select for bulk actions'
+    sel.checked = opts.selection.has(session.id)
+    el.classList.toggle('selected', sel.checked)
+    sel.addEventListener('change', () => {
+      if (sel.checked) opts.selection.add(session.id)
+      else opts.selection.delete(session.id)
+      el.classList.toggle('selected', sel.checked)
+      opts.onSelectChange && opts.onSelectChange()
+    })
+    el.append(sel)
+  }
 
   const thumb = document.createElement('canvas')
   thumb.className = 'thumb clickable'
@@ -208,12 +226,20 @@ export async function renderHistory(listEl, opts = {}) {
   const [sessions, references] = await Promise.all([listSessions(), listReferences()])
   const refs = new Map(references.map((r) => [r.trackKey, r]))
 
+  // Drop any selected ids that no longer exist (deleted elsewhere), then let the
+  // bulk bar re-sync from the pruned set below.
+  if (opts.selection) {
+    const present = new Set(sessions.map((s) => s.id))
+    for (const id of [...opts.selection]) if (!present.has(id)) opts.selection.delete(id)
+  }
+
   listEl.innerHTML = ''
   if (!sessions.length) {
     const empty = document.createElement('p')
     empty.className = 'muted small empty'
     empty.textContent = 'No recordings yet. Play something and hit Record.'
     listEl.append(empty)
+    if (opts.onSelectChange) opts.onSelectChange()
     return
   }
   const filtered = sessions.filter((s) => matchesFilter(s, refs, query, mood))
@@ -224,10 +250,11 @@ export async function renderHistory(listEl, opts = {}) {
     listEl.append(empty)
     return
   }
-  // Pass opts through onChange so edits/deletes keep the active filter.
+  // Pass opts through onChange so edits/deletes keep the active filter + selection.
   for (const session of filtered) {
-    listEl.append(card(session, refs, () => renderHistory(listEl, opts)))
+    listEl.append(card(session, refs, () => renderHistory(listEl, opts), opts))
   }
+  if (opts.onSelectChange) opts.onSelectChange() // keep the bulk bar in sync with every render
 }
 
 /** Export the whole vault (sessions + reference library) as downloadable JSON. */
