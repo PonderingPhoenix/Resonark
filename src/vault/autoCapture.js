@@ -12,6 +12,21 @@ export const AUTO_DEFAULTS = {
   armMs: 350,       // sound must persist this long before a segment begins
   gapMs: 1600,      // silence must persist this long to call a song "ended"
   minContentMs: 15000, // segments with less than this much sound are discarded
+  trackSplitMinMs: 10000, // on a Spotify track change, save the old song if it's at least this long
+}
+
+/**
+ * Decide what to do when the now-playing track changes mid-recording — the
+ * boundary silence-gaps can't catch (gapless albums, crossfades). Pure so it's
+ * unit-testable apart from the driver.
+ * @returns {'none'|'split'|'relabel'}
+ *   split   — finalize+save the current song and start a fresh one
+ *   relabel — the current segment is too short to be its own song; just retag it
+ */
+export function trackChangeDecision({ recording, connected, currentId, segTrackId, contentMs, minMs = AUTO_DEFAULTS.trackSplitMinMs }) {
+  if (!recording || !connected || !currentId) return 'none'
+  if (currentId === segTrackId) return 'none' // same track (or first label) — nothing to do
+  return contentMs >= minMs ? 'split' : 'relabel'
 }
 
 export function createAutoState() {
