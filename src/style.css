@@ -314,6 +314,18 @@ kbd {
 .detail-stat span { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
 .detail-stat b { font-size: 14px; font-variant-numeric: tabular-nums; }
 .detail-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
+
+/* ---- Mood ("feel") badge + chip ---- */
+.mood-chip { font-weight: 600; }
+.detail-mood {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--panel-2); border: 1px solid var(--line); border-left-width: 4px;
+  border-radius: 10px; padding: 10px 12px; margin: 2px 0;
+}
+.dm-emoji { font-size: 26px; line-height: 1; }
+.dm-text { display: flex; flex-direction: column; gap: 2px; }
+.dm-text b { font-size: 15px; }
+.dm-blurb { font-size: 12px; color: var(--muted); }
 .thumb.clickable { cursor: pointer; }
 .thumb.clickable:hover { filter: brightness(1.18); }
 

@@ -1,5 +1,6 @@
 import { heat } from '../utils/colors.js'
 import { listSessions, deleteSession, updateSession, listReferences } from '../vault/store.js'
+import { moodFromStats } from '../vault/mood.js'
 import { openDetail } from './detail.js'
 
 // Renders the vault. Two kinds of entry:
@@ -114,6 +115,15 @@ function card(session, refs, onChange) {
   chips.className = 'chips'
   if (hasFp) {
     const s = fp.stats || {}
+    const mood = moodFromStats(s)
+    if (mood) {
+      const mc = statChip(mood.emoji, mood.label)
+      mc.classList.add('mood-chip')
+      mc.style.borderColor = mood.color
+      mc.style.color = mood.color
+      mc.title = `Feel: ${mood.label} — ${mood.blurb} (a rough read from the sound)`
+      chips.append(mc)
+    }
     chips.append(
       statChip('Bright', `${Math.round(s.avgCentroid || 0)}Hz`),
       statChip('Loud', Math.round(s.avgLoudness || 0)),

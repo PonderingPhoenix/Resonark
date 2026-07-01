@@ -2,6 +2,7 @@ import { collapseSpectrogram, levelNormalize } from '../vault/analytics.js'
 import { isStrongKey } from '../vault/trackKey.js'
 import { areaCurve, divergingCurve, prepCanvas } from './charts.js'
 import { heat } from '../utils/colors.js'
+import { moodFromStats } from '../vault/mood.js'
 import { deleteSession } from '../vault/store.js'
 
 // A per-session drill-in modal: large spectrogram, full stats, average spectrum,
@@ -96,6 +97,21 @@ export function openDetail(session, refMap, onChange) {
 
   if (hasFp && fp.stats) {
     const s = fp.stats
+
+    const mood = moodFromStats(s)
+    if (mood) {
+      const badge = document.createElement('div')
+      badge.className = 'detail-mood'
+      badge.style.borderColor = mood.color
+      const pct = (x) => `${Math.round(x * 100)}%`
+      badge.innerHTML =
+        `<span class="dm-emoji">${mood.emoji}</span>` +
+        `<div class="dm-text"><b style="color:${mood.color}">${mood.label}</b>` +
+        `<span class="dm-blurb">${mood.blurb} · energy ${pct(mood.energy)} · positivity ${pct(mood.positivity)}</span></div>`
+      badge.title = 'A rough read of the feel from the sound — not a verdict.'
+      body.append(badge)
+    }
+
     const grid = document.createElement('div')
     grid.className = 'detail-stats'
     const stat = (k, v) => { const d = document.createElement('div'); d.className = 'detail-stat'; d.innerHTML = `<span>${k}</span><b>${v}</b>`; return d }
