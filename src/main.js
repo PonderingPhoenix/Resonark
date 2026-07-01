@@ -13,6 +13,7 @@ import { loadSettings, saveSettings, DEFAULT_SETTINGS } from './settings.js'
 import { PALETTES } from './utils/colors.js'
 import { applyFocus, FOCUS_MODES } from './utils/focus.js'
 import { createAutoState, stepAuto, trackChangeDecision } from './vault/autoCapture.js'
+import { MOODS } from './vault/mood.js'
 
 const VIZ_BANDS = 96 // bands used for display (the vault stores 64 separately)
 
@@ -68,6 +69,8 @@ const recTimer = $('#rec-timer')
 const autoCaptureInput = $('#auto-capture')
 const autoCapStatus = $('#auto-cap-status')
 const historyList = $('#history-list')
+const historySearch = $('#history-search')
+const historyMood = $('#history-mood')
 const connectBtn = $('[data-action="spotify-connect"]')
 const disconnectBtn = $('[data-action="spotify-disconnect"]')
 const autolabelWrap = $('#autolabel-wrap')
@@ -133,6 +136,29 @@ visualizers.forEach((v, i) => {
 function updateModeDesc() {
   if (modeDesc) modeDesc.textContent = activeViz.desc || ''
 }
+
+// Re-render History honoring the active search + mood filter. Every code path
+// that changes the vault goes through this so the filter is never lost.
+function refreshHistory() {
+  return renderHistory(historyList, { query: historySearch.value, mood: historyMood.value })
+}
+
+function buildHistoryFilter() {
+  const all = document.createElement('option')
+  all.value = 'all'
+  all.textContent = 'All moods'
+  historyMood.append(all)
+  Object.values(MOODS).forEach((m) => {
+    const o = document.createElement('option')
+    o.value = m.key
+    o.textContent = `${m.emoji} ${m.label}`
+    historyMood.append(o)
+  })
+  let debounce = null
+  historySearch.addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(refreshHistory, 150) })
+  historyMood.addEventListener('change', refreshHistory)
+}
+buildHistoryFilter()
 
 // ---- Visualizer options: color palette, size, frequency focus ----
 const paletteSwatches = $('#palette-swatches')
@@ -468,7 +494,7 @@ async function logReferencePlay(track) {
     spectrogramDims: { bins: 0, cols: 0 },
   }
   await saveSession(session)
-  await renderHistory(historyList)
+  await refreshHistory()
   refreshAnalyticsIfOpen()
 }
 
@@ -507,7 +533,7 @@ async function stopRecording() {
     session.id = id
     // A clean (file) capture of an identifiable track seeds the reference library.
     await upsertReferenceFromSession(session)
-    await renderHistory(historyList)
+    await refreshHistory()
     refreshAnalyticsIfOpen()
   }
   // Reset label fields so they don't carry over to the next recording.
@@ -745,7 +771,7 @@ async function importVault(file) {
   }
   try {
     const res = await bulkImport(sessions, references)
-    await renderHistory(historyList)
+    await refreshHistory()
     refreshAnalyticsIfOpen()
     alert(
       `Imported ${res.added} session${res.added === 1 ? '' : 's'}` +
@@ -821,7 +847,7 @@ resize()
 ensureEdges()
 applyOverlay()
 updateModeDesc()
-renderHistory(historyList)
+refreshHistory()
 requestAnimationFrame(loop)
 
 // First visit: show the friendly "how it works" intro once. Marking it seen here
