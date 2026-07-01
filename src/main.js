@@ -69,6 +69,8 @@ const setFft = $('#set-fft')
 const setSmooth = $('#set-smooth')
 const setMinDb = $('#set-mindb')
 const setMaxDb = $('#set-maxdb')
+const setAutolisten = $('#set-autolisten')
+const idleHint = $('#idle-hint')
 
 // ---- Canvas sizing (device pixels for crisp rendering) ----
 function resize() {
@@ -158,6 +160,13 @@ function loop() {
   }
 }
 
+// Reflect the live/idle listening state in the panel.
+function setLive(active, label = '') {
+  sourceName.textContent = label
+  sourceName.classList.toggle('live', !!active)
+  idleHint.hidden = !!active
+}
+
 // ---- Source handling ----
 async function startFile(file) {
   const el = await engine.useFile(file)
@@ -165,7 +174,7 @@ async function startFile(file) {
   hint.hidden = true
   readouts.hidden = false
   transport.hidden = false
-  sourceName.textContent = file.name
+  setLive(true, file.name)
   playBtn.textContent = '❚❚'
   el.play().catch(() => {})
   el.addEventListener('ended', () => {
@@ -181,7 +190,7 @@ async function startMic() {
     hint.hidden = true
     readouts.hidden = false
     transport.hidden = true
-    sourceName.textContent = 'Live microphone'
+    setLive(true, 'Live microphone')
   } catch (err) {
     alert('Could not access microphone: ' + err.message)
   }
@@ -194,7 +203,7 @@ async function startSystem() {
     hint.hidden = true
     readouts.hidden = false
     transport.hidden = true
-    sourceName.textContent = 'System / tab audio'
+    setLive(true, 'System / tab audio')
   } catch (err) {
     // The user cancelling the share picker throws NotAllowedError — stay silent for that.
     if (err && err.name === 'NotAllowedError') return
@@ -208,7 +217,7 @@ function handleSourceEnded() {
   if (recorder.recording) stopRecording()
   readouts.hidden = true
   transport.hidden = true
-  sourceName.textContent = ''
+  setLive(false)
   hint.hidden = false
 }
 engine.onSourceEnded = handleSourceEnded
@@ -406,6 +415,7 @@ function syncSettingsUI() {
   setSmooth.value = String(settings.smoothing)
   setMinDb.value = String(settings.minDb)
   setMaxDb.value = String(settings.maxDb)
+  setAutolisten.checked = settings.autoListen
   $('#set-smooth-v').textContent = settings.smoothing.toFixed(2)
   $('#set-mindb-v').textContent = `${settings.minDb} dB`
   $('#set-maxdb-v').textContent = `${settings.maxDb} dB`
@@ -416,6 +426,7 @@ function applySettings() {
     smoothing: Number(setSmooth.value),
     minDb: Number(setMinDb.value),
     maxDb: Number(setMaxDb.value),
+    autoListen: setAutolisten.checked,
   })
   Object.assign(settings, next)
   const fftChanged = engine.configure(settings)
@@ -423,6 +434,7 @@ function applySettings() {
   syncSettingsUI()
 }
 ;[setFft, setSmooth, setMinDb, setMaxDb].forEach((el) => el.addEventListener('input', applySettings))
+setAutolisten.addEventListener('change', applySettings)
 syncSettingsUI()
 
 // ---- Wire up actions ----
@@ -608,6 +620,27 @@ ensureEdges()
 applyOverlay()
 renderHistory(historyList)
 requestAnimationFrame(loop)
+
+// Browsers start an AudioContext suspended until a user gesture (autoplay
+// policy). Resume it on the first interaction so an auto-started mic goes live.
+const resumeOnce = () => {
+  if (engine.ready) engine.resume()
+  window.removeEventListener('pointerdown', resumeOnce)
+  window.removeEventListener('keydown', resumeOnce)
+}
+window.addEventListener('pointerdown', resumeOnce)
+window.addEventListener('keydown', resumeOnce)
+
+// "Always listening": if mic permission was already granted, start it on open so
+// the visualizer is live immediately — without ever popping an unprompted dialog.
+async function maybeAutoListen() {
+  if (!settings.autoListen || !navigator.permissions?.query) return
+  try {
+    const status = await navigator.permissions.query({ name: 'microphone' })
+    if (status.state === 'granted') startMic()
+  } catch { /* permissions API can't query mic here — leave it to a manual click */ }
+}
+maybeAutoListen()
 
 // Complete any pending Spotify OAuth redirect, then render the Spotify UI.
 spotify.handleRedirect()

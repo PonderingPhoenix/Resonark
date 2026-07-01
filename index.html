@@ -57,6 +57,7 @@
             <span id="time" class="time">0:00</span>
           </div>
           <p id="source-name" class="muted small"></p>
+          <p id="idle-hint" class="muted small idle-hint">Not listening yet — pick a source above to go live.</p>
         </section>
 
         <section class="modes">
@@ -153,6 +154,10 @@
             <label class="set-row">
               <span>Meter ceiling <em id="set-maxdb-v"></em></span>
               <input id="set-maxdb" type="range" min="-45" max="0" step="5" />
+            </label>
+            <label class="set-row toggle-row">
+              <span>Auto-listen with mic on open <em>once permission is granted</em></span>
+              <input id="set-autolisten" type="checkbox" />
             </label>
             <div class="modal-actions">
               <button class="btn tiny ghost" data-action="reset-settings">Reset to defaults</button>
