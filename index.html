@@ -64,7 +64,7 @@
             <button class="btn" data-action="use-system" id="system-btn" title="Capture another tab's sound (e.g. YouTube) — clean, no mic">🖥 System</button>
           </div>
           <p id="system-tip" class="muted small system-tip" hidden>
-            💡 To grab sound from YouTube/Spotify in another tab: click <b>System</b>, choose that <b>tab</b> (not “Entire screen”), and turn on <b>“Also share tab audio”</b> in the dialog.
+            💡 New here? <b>🎵 File</b> (open a song) or <b>🎤 Mic</b> (listen to the room) are the easy ways in. <b>🖥 System</b> is advanced — the browser pops up a long list of windows; ignore the odd names, pick the one playing your music, and turn on its audio.
           </p>
           <input id="file-input" type="file" accept="audio/*" hidden />
           <div id="transport" class="transport" hidden>
@@ -80,7 +80,11 @@
           <h2>Visual mode</h2>
           <div id="mode-buttons" class="mode-grid"></div>
           <p id="mode-desc" class="muted small mode-desc"></p>
-          <div class="viz-opts">
+          <div class="mode-extra">
+            <button class="btn tiny" data-action="surprise" title="Pick a look for me">🎲 Surprise me</button>
+            <button class="btn tiny ghost" data-action="toggle-customize" id="customize-toggle" aria-expanded="false" aria-controls="viz-opts">Customize ▾</button>
+          </div>
+          <div class="viz-opts" id="viz-opts" hidden>
             <div class="opt-row">
               <span class="opt-label">Colors</span>
               <div id="palette-swatches" class="swatches"></div>
@@ -256,7 +260,7 @@
               <div class="kbd-list">
                 <span><kbd>Space</kbd> record / stop</span>
                 <span><kbd>F</kbd> <kbd>M</kbd> <kbd>S</kbd> file / mic / system</span>
-                <span><kbd>1</kbd>–<kbd>8</kbd> visual mode</span>
+                <span><kbd>1</kbd>–<kbd>9</kbd> visual mode</span>
                 <span><kbd>A</kbd> analytics · <kbd>H</kbd> help · <kbd>Esc</kbd> close</span>
               </div>
             </div>
