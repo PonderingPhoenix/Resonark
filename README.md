@@ -36,7 +36,7 @@ npm run preview  # preview the production build
 
 | Concern | Implementation |
 |---|---|
-| Audio access | Web Audio API. `<audio>` + `MediaElementSource` for files, `getUserMedia` + `MediaStreamSource` for mic. |
+| Audio access | Web Audio API. `<audio>` + `MediaElementSource` for files, `getUserMedia` for mic, `getDisplayMedia` (tab/system audio) for hands-free loopback capture on desktop. |
 | Analysis | `AnalyserNode` FFT → byte frequency data, reduced to log-spaced bands + spectral features (loudness, centroid/brightness, bass/mid/treble energy, dynamic range). |
 | Visuals | Plain Canvas 2D. Each mode is a self-contained renderer in `src/visualizers/`. |
 | The vault | Recorded sessions are stored in **IndexedDB** as a flat `Uint8Array` spectrogram (64 bins × up to ~720 columns) plus aggregate stats. Compact by design — no raw PCM, no per-frame bloat. |
@@ -77,6 +77,7 @@ the spectrum actually means:
 | Capture | What it is | Where it's tapped | Reusable as a track's reference? |
 |---|---|---|---|
 | **File** 📁 | the decoded *digital* signal | inside the app, before the output device | **Yes** — it's a property of the recording (same regardless of BT speaker vs headphones) |
+| **System** 🖥 | system / tab audio via `getDisplayMedia` | the OS/browser audio bus, before the speaker | **Yes** — also a clean pre-speaker digital signal (hands-free capture of streamed audio) |
 | **Mic** 🎤 | the *acoustic* sound in the air | after the speaker + room | **No** — it measures this speaker, room, and volume at this moment |
 
 So playing the same track through a Bluetooth speaker vs. headphones gives the
@@ -110,6 +111,30 @@ Only file captures seed references; mic captures never do (they measure your
 room, not the recording). Today the library is local to your own vault — the
 same keying extends cleanly to a shared, cross-user library behind a backend.
 
+## Vault analytics
+
+The **📊 Analytics** button (History header) opens a dashboard over your whole
+vault. Everything is computed locally from stored sessions — no live audio.
+
+- **Overview** — KPI tiles (plays, minutes captured, unique tracks, reference
+  library size), a **plays-over-time** timeline (captured vs. logged, auto
+  day/week/month buckets), and a **hour × weekday** listening heatmap.
+- **Sound character** (captured audio, with a *file-only* filter) — **brightness**
+  (spectral-centroid) trend with a period-over-period delta, **loudness &
+  dynamics** (avg/peak with the dynamic-range gap shaded), **tonal balance**
+  (level-independent bass/mid/treble share), and the **dominant-band** split.
+- **Spectrum & gear signature** — the **average library spectrum** (mean 64-bin
+  profile), and the standout: the **speaker/room coloration curve** — for any
+  track you have both a clean file *reference* and a *mic* capture of, the per-bin
+  delta (level-normalized) shows how your speaker + room color the sound vs. the
+  recording. Aggregated (median) across tracks into a system signature.
+- **Leaderboards & identity** — top tracks/artists, and a track-identity
+  breakdown (ISRC / Spotify / name / none) showing how reliably the vault can
+  dedupe and inherit fingerprints.
+
+All aggregates exclude metadata-only logged plays (they have no measured
+spectrum), guard empty/single/silent inputs, and bucket time in your local zone.
+
 **Setup:** create an app at the
 [Spotify dashboard](https://developer.spotify.com/dashboard), add your EchoVault
 URL as a Redirect URI (use `http://127.0.0.1:5173/` for local dev — Spotify
@@ -134,11 +159,14 @@ src/
     Recorder.js           accumulates a session into a compact fingerprint
     fingerprint.js        log-spaced band mapping + downsampling
     trackKey.js           track identity (ISRC → Spotify ID → name+artist)
+    analytics.js          pure aggregations over the vault (unit-testable)
     store.js              IndexedDB persistence (sessions + reference library)
   integrations/
     spotify.js            PKCE OAuth + currently-playing / recently-played
   ui/
     history.js            renders the vault, thumbnails, edit/delete/export
+    charts.js             self-drawn Canvas/DOM chart primitives (no chart lib)
+    analytics.js          builds the analytics dashboard from analytics.js + charts.js
   utils/
     colors.js             heatmap palette helpers
 ```
@@ -147,9 +175,12 @@ src/
 
 - ✅ **Now-playing pairing** — auto-label each recorded fingerprint with the
   track Spotify reports, plus a recently-played history list. *(done)*
-- **System / loopback capture** on desktop (capture the OS audio bus instead of
-  the mic) for clean, hands-off recording of streamed audio.
+- ✅ **System / loopback capture** on desktop (`getDisplayMedia`) for clean,
+  hands-off recording of streamed audio. *(done)*
+- ✅ **Vault analytics** — trends, distributions, and the speaker/room
+  coloration signature. *(done)*
 - **Last.fm / Apple Music** as alternative metadata sources.
+- **Cross-user shared reference library** behind a backend.
 - **Vault analytics** — trends over time: how the brightness / dynamic range /
   bass balance of your listening shifts week to week.
 - **Capacitor wrapper** for Android/iOS.

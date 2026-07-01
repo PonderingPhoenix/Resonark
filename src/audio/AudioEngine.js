@@ -12,11 +12,18 @@ export class AudioEngine {
     this.source = null
 
     this.mediaEl = null   // <audio> element when playing a file
-    this.stream = null    // MediaStream when using the mic
-    this.sourceType = null // 'file' | 'mic' | null
+    this.stream = null    // MediaStream when using the mic / system audio
+    this.sourceType = null // 'file' | 'mic' | 'system' | null
+
+    this.onSourceEnded = null // called when a live capture ends (e.g. user stops sharing)
 
     this.freqData = null
     this.timeData = null
+  }
+
+  /** Whether the browser can capture system / tab audio (desktop Chromium-family only). */
+  get supportsSystemAudio() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)
   }
 
   _ensureContext() {
@@ -87,6 +94,41 @@ export class AudioEngine {
     // Intentionally NOT connected to destination.
 
     this.sourceType = 'mic'
+    await this.resume()
+  }
+
+  /**
+   * Capture system / tab audio via getDisplayMedia — the OS/browser audio bus,
+   * NOT the microphone. This is a clean, pre-speaker digital signal (so it's
+   * reference-eligible, like a file). Not routed to the speakers (you already
+   * hear the source; routing back would double it).
+   */
+  async useSystemAudio() {
+    this._ensureContext()
+    if (!this.supportsSystemAudio) throw new Error('System audio capture is not supported in this browser.')
+    this._teardownSource()
+
+    // A video request is required by most browsers even when we only want audio.
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+    })
+    const audioTracks = stream.getAudioTracks()
+    if (!audioTracks.length) {
+      stream.getTracks().forEach((t) => t.stop())
+      throw new Error('No audio was shared. Pick a browser tab (or a screen) and enable “Share tab/system audio”.')
+    }
+    this.stream = stream
+    this.source = this.ctx.createMediaStreamSource(stream)
+    this.source.connect(this.analyser)
+    // Intentionally NOT connected to destination.
+
+    // Reset when the user stops sharing from the browser's own UI.
+    const done = () => { if (this.sourceType === 'system' && this.onSourceEnded) this.onSourceEnded() }
+    audioTracks[0].addEventListener('ended', done)
+    stream.getVideoTracks().forEach((t) => t.addEventListener('ended', done))
+
+    this.sourceType = 'system'
     await this.resume()
   }
 

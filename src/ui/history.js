@@ -134,11 +134,16 @@ function card(session, refs, onChange) {
   } else {
     const cap = session.capturePath || session.label?.source
     if (cap && cap !== 'unknown') {
-      const c = statChip(cap === 'mic' ? '🎤 mic' : '📁 file', cap === 'mic' ? 'environment' : 'reference')
+      const meta = {
+        mic: { icon: '🎤 mic', kind: 'environment' },
+        file: { icon: '📁 file', kind: 'reference' },
+        system: { icon: '🖥 system', kind: 'reference' },
+      }[cap] || { icon: cap, kind: '' }
+      const c = statChip(meta.icon, meta.kind)
       c.classList.add('capture-chip', cap === 'mic' ? 'env' : 'ref')
       c.title = cap === 'mic'
         ? 'Acoustic capture — measures this speaker/room, specific to the moment'
-        : 'Digital capture — a property of the recording, eligible as a shared reference'
+        : 'Digital capture (pre-speaker) — a property of the recording, eligible as a shared reference'
       chips.append(c)
     }
   }

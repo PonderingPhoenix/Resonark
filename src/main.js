@@ -7,6 +7,7 @@ import { saveSession, upsertReferenceFromSession } from './vault/store.js'
 import { trackKeyOf } from './vault/trackKey.js'
 import { visualizers, getVisualizer } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
+import { renderAnalytics } from './ui/analytics.js'
 import { SpotifyClient } from './integrations/spotify.js'
 
 const VIZ_BANDS = 96 // bands used for display (the vault stores 64 separately)
@@ -57,6 +58,9 @@ const npTitle = $('#np-title')
 const npArtist = $('#np-artist')
 const recentSection = $('#recent-section')
 const recentList = $('#recent-list')
+const analyticsOverlay = $('#analytics-overlay')
+const analyticsBody = $('#analytics-body')
+const fileOnlyToggle = $('#an-file-only')
 
 // ---- Canvas sizing (device pixels for crisp rendering) ----
 function resize() {
@@ -175,6 +179,32 @@ async function startMic() {
   }
 }
 
+async function startSystem() {
+  try {
+    await engine.useSystemAudio()
+    vizEdges = null
+    hint.hidden = true
+    readouts.hidden = false
+    transport.hidden = true
+    sourceName.textContent = 'System / tab audio'
+  } catch (err) {
+    // The user cancelling the share picker throws NotAllowedError — stay silent for that.
+    if (err && err.name === 'NotAllowedError') return
+    alert('Could not capture system audio: ' + err.message)
+  }
+}
+
+// Called when a live capture ends on its own (e.g. the user clicks the browser's
+// "Stop sharing"). Reset back to the idle state.
+function handleSourceEnded() {
+  if (recorder.recording) stopRecording()
+  readouts.hidden = true
+  transport.hidden = true
+  sourceName.textContent = ''
+  hint.hidden = false
+}
+engine.onSourceEnded = handleSourceEnded
+
 // ---- Spotify pairing ----
 function refreshSpotifyUi() {
   const connected = spotify.isConnected()
@@ -281,6 +311,7 @@ async function logReferencePlay(track) {
   }
   await saveSession(session)
   await renderHistory(historyList)
+  refreshAnalyticsIfOpen()
 }
 
 function escapeHtml(s) {
@@ -319,6 +350,7 @@ async function stopRecording() {
     // A clean (file) capture of an identifiable track seeds the reference library.
     await upsertReferenceFromSession(session)
     await renderHistory(historyList)
+    refreshAnalyticsIfOpen()
   }
   // Reset label fields so they don't carry over to the next recording.
   npTitle.value = ''
@@ -342,6 +374,23 @@ function startRecording() {
   recordBtn.querySelector('.rec-label').textContent = 'Stop'
 }
 
+// ---- Analytics ----
+function renderAnalyticsView() {
+  return renderAnalytics(analyticsBody, { digitalOnly: fileOnlyToggle.checked })
+}
+function openAnalytics() {
+  analyticsOverlay.hidden = false
+  renderAnalyticsView()
+}
+function closeAnalytics() {
+  analyticsOverlay.hidden = true
+}
+/** Re-render the analytics view if it's currently open (called after the vault changes). */
+function refreshAnalyticsIfOpen() {
+  if (!analyticsOverlay.hidden) renderAnalyticsView()
+}
+fileOnlyToggle.addEventListener('change', () => { if (!analyticsOverlay.hidden) renderAnalyticsView() })
+
 // ---- Wire up actions ----
 document.addEventListener('click', (e) => {
   const action = e.target.closest('[data-action]')?.dataset.action
@@ -352,6 +401,9 @@ document.addEventListener('click', (e) => {
       break
     case 'use-mic':
       startMic()
+      break
+    case 'use-system':
+      startSystem()
       break
     case 'playpause':
       if (engine.mediaEl) {
@@ -369,6 +421,12 @@ document.addEventListener('click', (e) => {
       break
     case 'export-all':
       exportAll()
+      break
+    case 'show-analytics':
+      openAnalytics()
+      break
+    case 'hide-analytics':
+      closeAnalytics()
       break
     case 'spotify-connect':
       connectSpotify()
@@ -417,6 +475,10 @@ seek.addEventListener('input', () => {
 })
 
 // ---- Boot ----
+// Hide the system-audio buttons where the browser can't capture it (mobile, etc.).
+if (!engine.supportsSystemAudio) {
+  document.querySelectorAll('[data-action="use-system"]').forEach((b) => { b.hidden = true })
+}
 resize()
 ensureEdges()
 applyOverlay()
