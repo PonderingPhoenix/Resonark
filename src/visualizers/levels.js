@@ -32,7 +32,7 @@ export const levels = {
     if (pf.hz > 0) s.hz += (pf.hz - s.hz) * k
     const note = frequencyToNote(s.hz)
 
-    ctx.fillStyle = '#05070c'
+    ctx.fillStyle = '#05060a'
     ctx.fillRect(0, 0, w, h)
 
     const unit = Math.min(w, h)

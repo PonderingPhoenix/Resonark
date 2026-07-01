@@ -21,7 +21,7 @@ export const meter = {
 
   draw({ ctx, w, h, freq, time, features, audio }) {
     const { sampleRate, fftSize, minDb, maxDb } = audio
-    ctx.fillStyle = '#04060a'
+    ctx.fillStyle = '#05060a'
     ctx.fillRect(0, 0, w, h)
 
     const unit = Math.min(w, h)
