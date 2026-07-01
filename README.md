@@ -32,6 +32,11 @@ npm run build    # production build to dist/
 npm run preview  # preview the production build
 ```
 
+EchoVault is an installable **PWA**: the built app ships a web manifest + service
+worker (via `vite-plugin-pwa`), so you can install it to your home screen /
+desktop and it **works fully offline** — fitting, since the whole app (analysis
+and the vault) already runs client-side with no backend.
+
 ## How it works
 
 | Concern | Implementation |
