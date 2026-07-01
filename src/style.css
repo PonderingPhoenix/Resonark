@@ -258,6 +258,16 @@ body { overflow: hidden; }
 }
 .install-btn:hover { background: rgba(78, 163, 255, 0.2); border-color: var(--accent); }
 
+/* ---- Vault search / filter ---- */
+.history-filter { display: flex; gap: 8px; }
+.history-search {
+  flex: 1; min-width: 0;
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+  border-radius: 8px; padding: 8px 10px; font-size: 13px;
+}
+.history-search:focus { outline: none; border-color: var(--accent); }
+.history-filter .opt-select { flex: none; width: auto; max-width: 45%; }
+
 /* ---- Modal (settings) ---- */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 60;

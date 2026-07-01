@@ -183,7 +183,28 @@ function card(session, refs, onChange) {
   return el
 }
 
-export async function renderHistory(listEl) {
+// Where a session's spectrogram + stats live (its own, or an inherited reference).
+function resolveFp(session, refs) {
+  return session.kind === 'reference' ? refs.get(session.trackKey) : session
+}
+
+function matchesFilter(session, refs, query, mood) {
+  if (query) {
+    const hay = `${session.label?.title || ''} ${session.label?.artist || ''}`.toLowerCase()
+    if (!hay.includes(query)) return false
+  }
+  if (mood && mood !== 'all') {
+    const fp = resolveFp(session, refs)
+    const hasFp = !!(fp && fp.spectrogramDims && fp.spectrogramDims.cols > 0)
+    const m = hasFp ? moodFromStats(fp.stats) : null
+    if (!m || m.key !== mood) return false
+  }
+  return true
+}
+
+export async function renderHistory(listEl, opts = {}) {
+  const query = (opts.query || '').trim().toLowerCase()
+  const mood = opts.mood || 'all'
   const [sessions, references] = await Promise.all([listSessions(), listReferences()])
   const refs = new Map(references.map((r) => [r.trackKey, r]))
 
@@ -195,8 +216,17 @@ export async function renderHistory(listEl) {
     listEl.append(empty)
     return
   }
-  for (const session of sessions) {
-    listEl.append(card(session, refs, () => renderHistory(listEl)))
+  const filtered = sessions.filter((s) => matchesFilter(s, refs, query, mood))
+  if (!filtered.length) {
+    const empty = document.createElement('p')
+    empty.className = 'muted small empty'
+    empty.textContent = 'No matches — try a different search or mood.'
+    listEl.append(empty)
+    return
+  }
+  // Pass opts through onChange so edits/deletes keep the active filter.
+  for (const session of filtered) {
+    listEl.append(card(session, refs, () => renderHistory(listEl, opts)))
   }
 }
 
