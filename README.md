@@ -27,6 +27,9 @@ npm run dev      # open the printed localhost URL
 Then either **Open an audio file** or **Use microphone**, pick a visual mode,
 and hit **Record** to save a fingerprint to your vault.
 
+**Keyboard:** `Space` record/stop · `F`/`M`/`S` file / mic / system · `1`–`6`
+visual mode · `A` analytics · `Esc` close (also listed under ⚙ settings).
+
 ```bash
 npm run build    # production build to dist/
 npm run preview  # preview the production build

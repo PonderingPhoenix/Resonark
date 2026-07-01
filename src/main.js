@@ -562,6 +562,38 @@ seek.addEventListener('input', () => {
   if (el && el.duration) el.currentTime = (Number(seek.value) / 1000) * el.duration
 })
 
+// ---- Keyboard shortcuts ----
+const overlays = () => [settingsOverlay, analyticsOverlay, document.getElementById('detail-overlay')]
+const anyOverlayOpen = () => overlays().some((o) => o && !o.hidden)
+const closeOverlays = () => overlays().forEach((o) => { if (o) o.hidden = true })
+
+window.addEventListener('keydown', (e) => {
+  const t = e.target
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
+  if (e.metaKey || e.ctrlKey || e.altKey) return
+
+  if (e.key === 'Escape') {
+    if (anyOverlayOpen()) { closeOverlays(); e.preventDefault() }
+    return
+  }
+  if (anyOverlayOpen()) return // while a modal is open, only Esc is active
+
+  if (e.key === ' ') { // record / stop
+    e.preventDefault()
+    if (engine.ready) recorder.recording ? stopRecording() : startRecording()
+    return
+  }
+  const k = e.key.toLowerCase()
+  if (k === 'f') { fileInput.click(); return }
+  if (k === 'm') { startMic(); return }
+  if (k === 's') { if (engine.supportsSystemAudio) startSystem(); return }
+  if (k === 'a') { openAnalytics(); return }
+  if (e.key >= '1' && e.key <= '9') {
+    const btn = modeButtons.querySelectorAll('.mode')[Number(e.key) - 1]
+    if (btn) btn.click()
+  }
+})
+
 // ---- Boot ----
 // Hide the system-audio buttons where the browser can't capture it (mobile, etc.).
 if (!engine.supportsSystemAudio) {
