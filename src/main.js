@@ -12,7 +12,7 @@ import { SpotifyClient } from './integrations/spotify.js'
 import { loadSettings, saveSettings, DEFAULT_SETTINGS } from './settings.js'
 import { PALETTES } from './utils/colors.js'
 import { applyFocus, FOCUS_MODES } from './utils/focus.js'
-import { createAutoState, stepAuto } from './vault/autoCapture.js'
+import { createAutoState, stepAuto, trackChangeDecision } from './vault/autoCapture.js'
 
 const VIZ_BANDS = 96 // bands used for display (the vault stores 64 separately)
 
@@ -242,6 +242,25 @@ function loop() {
     lastAutoTs = now
     // Keep the machine consistent if the user manually toggled Record underneath it.
     if (autoState.phase === 'recording' && !recorder.recording) { autoState.phase = 'idle'; autoState.armMs = 0 }
+
+    // Spotify track change = a song boundary that silence can't catch (gapless
+    // albums, crossfades). Split on it so each track lands as its own capture.
+    const change = trackChangeDecision({
+      recording: recorder.recording,
+      connected: spotify.isConnected(),
+      currentId: currentTrack?.id,
+      segTrackId: recordingTrack?.id,
+      contentMs: autoState.segMs - autoState.quietMs,
+    })
+    if (change === 'split') {
+      stopRecording()
+      startRecording(currentTrack)
+      autoState.segMs = 0
+      autoState.quietMs = 0
+    } else if (change === 'relabel') {
+      recordingTrack = currentTrack // too short to be its own song — just retag it
+    }
+
     const action = stepAuto(autoState, features.rms, dt)
     if (action === 'start' && !recorder.recording) startRecording(spotify.isConnected() ? currentTrack : null)
     else if (action === 'stop' && recorder.recording) stopRecording()
