@@ -1,5 +1,6 @@
 import { listSessions, listReferences } from '../vault/store.js'
 import * as A from '../vault/analytics.js'
+import { moodDistribution, MOODS } from '../vault/mood.js'
 import { kpiCard, stackedTimeBars, timeSeries, heatmapGrid, stackedBar100, vBars, areaCurve, divergingCurve, barList, SERIES } from './charts.js'
 
 // Builds the analytics view (Sections A–D) into a root element. Mirrors
@@ -159,6 +160,13 @@ export async function renderAnalytics(root, opts = {}) {
     { label: 'treble', value: dd.treble, color: SERIES.treble },
   ]))
   gB.append(pDom)
+
+  const md = moodDistribution(sessions)
+  const pMood = panel('Moods', md.n ? `${md.n} captures · a rough read` : 'no data')
+  addChart(pMood, 120, (c, w, h) => vBars(c, w, h,
+    Object.values(MOODS).map((m) => ({ label: m.label, value: md.counts[m.key], color: m.color }))))
+  note(pMood, 'Feel is estimated from loudness, dynamics and brightness — a rough read, not a verdict.')
+  gB.append(pMood)
 
   // ===== Section C — Spectrum & gear signature =====
   const gC = grid()
