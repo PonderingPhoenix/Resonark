@@ -110,6 +110,30 @@ Only file captures seed references; mic captures never do (they measure your
 room, not the recording). Today the library is local to your own vault — the
 same keying extends cleanly to a shared, cross-user library behind a backend.
 
+## Vault analytics
+
+The **📊 Analytics** button (History header) opens a dashboard over your whole
+vault. Everything is computed locally from stored sessions — no live audio.
+
+- **Overview** — KPI tiles (plays, minutes captured, unique tracks, reference
+  library size), a **plays-over-time** timeline (captured vs. logged, auto
+  day/week/month buckets), and a **hour × weekday** listening heatmap.
+- **Sound character** (captured audio, with a *file-only* filter) — **brightness**
+  (spectral-centroid) trend with a period-over-period delta, **loudness &
+  dynamics** (avg/peak with the dynamic-range gap shaded), **tonal balance**
+  (level-independent bass/mid/treble share), and the **dominant-band** split.
+- **Spectrum & gear signature** — the **average library spectrum** (mean 64-bin
+  profile), and the standout: the **speaker/room coloration curve** — for any
+  track you have both a clean file *reference* and a *mic* capture of, the per-bin
+  delta (level-normalized) shows how your speaker + room color the sound vs. the
+  recording. Aggregated (median) across tracks into a system signature.
+- **Leaderboards & identity** — top tracks/artists, and a track-identity
+  breakdown (ISRC / Spotify / name / none) showing how reliably the vault can
+  dedupe and inherit fingerprints.
+
+All aggregates exclude metadata-only logged plays (they have no measured
+spectrum), guard empty/single/silent inputs, and bucket time in your local zone.
+
 **Setup:** create an app at the
 [Spotify dashboard](https://developer.spotify.com/dashboard), add your EchoVault
 URL as a Redirect URI (use `http://127.0.0.1:5173/` for local dev — Spotify
@@ -134,11 +158,14 @@ src/
     Recorder.js           accumulates a session into a compact fingerprint
     fingerprint.js        log-spaced band mapping + downsampling
     trackKey.js           track identity (ISRC → Spotify ID → name+artist)
+    analytics.js          pure aggregations over the vault (unit-testable)
     store.js              IndexedDB persistence (sessions + reference library)
   integrations/
     spotify.js            PKCE OAuth + currently-playing / recently-played
   ui/
     history.js            renders the vault, thumbnails, edit/delete/export
+    charts.js             self-drawn Canvas/DOM chart primitives (no chart lib)
+    analytics.js          builds the analytics dashboard from analytics.js + charts.js
   utils/
     colors.js             heatmap palette helpers
 ```

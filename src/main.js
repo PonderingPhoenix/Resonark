@@ -7,6 +7,7 @@ import { saveSession, upsertReferenceFromSession } from './vault/store.js'
 import { trackKeyOf } from './vault/trackKey.js'
 import { visualizers, getVisualizer } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
+import { renderAnalytics } from './ui/analytics.js'
 import { SpotifyClient } from './integrations/spotify.js'
 
 const VIZ_BANDS = 96 // bands used for display (the vault stores 64 separately)
@@ -57,6 +58,9 @@ const npTitle = $('#np-title')
 const npArtist = $('#np-artist')
 const recentSection = $('#recent-section')
 const recentList = $('#recent-list')
+const analyticsOverlay = $('#analytics-overlay')
+const analyticsBody = $('#analytics-body')
+const fileOnlyToggle = $('#an-file-only')
 
 // ---- Canvas sizing (device pixels for crisp rendering) ----
 function resize() {
@@ -281,6 +285,7 @@ async function logReferencePlay(track) {
   }
   await saveSession(session)
   await renderHistory(historyList)
+  refreshAnalyticsIfOpen()
 }
 
 function escapeHtml(s) {
@@ -319,6 +324,7 @@ async function stopRecording() {
     // A clean (file) capture of an identifiable track seeds the reference library.
     await upsertReferenceFromSession(session)
     await renderHistory(historyList)
+    refreshAnalyticsIfOpen()
   }
   // Reset label fields so they don't carry over to the next recording.
   npTitle.value = ''
@@ -341,6 +347,23 @@ function startRecording() {
   recTimer.textContent = '0:00'
   recordBtn.querySelector('.rec-label').textContent = 'Stop'
 }
+
+// ---- Analytics ----
+function renderAnalyticsView() {
+  return renderAnalytics(analyticsBody, { capturePath: fileOnlyToggle.checked ? 'file' : null })
+}
+function openAnalytics() {
+  analyticsOverlay.hidden = false
+  renderAnalyticsView()
+}
+function closeAnalytics() {
+  analyticsOverlay.hidden = true
+}
+/** Re-render the analytics view if it's currently open (called after the vault changes). */
+function refreshAnalyticsIfOpen() {
+  if (!analyticsOverlay.hidden) renderAnalyticsView()
+}
+fileOnlyToggle.addEventListener('change', () => { if (!analyticsOverlay.hidden) renderAnalyticsView() })
 
 // ---- Wire up actions ----
 document.addEventListener('click', (e) => {
@@ -369,6 +392,12 @@ document.addEventListener('click', (e) => {
       break
     case 'export-all':
       exportAll()
+      break
+    case 'show-analytics':
+      openAnalytics()
+      break
+    case 'hide-analytics':
+      closeAnalytics()
       break
     case 'spotify-connect':
       connectSpotify()

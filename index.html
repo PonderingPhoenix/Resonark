@@ -100,11 +100,25 @@
         <section class="history">
           <div class="history-head">
             <h2>History</h2>
-            <button class="btn tiny ghost" data-action="export-all" title="Export all sessions as JSON">Export</button>
+            <div class="history-actions">
+              <button class="btn tiny" data-action="show-analytics" title="Open vault analytics">📊 Analytics</button>
+              <button class="btn tiny ghost" data-action="export-all" title="Export all sessions as JSON">Export</button>
+            </div>
           </div>
           <div id="history-list" class="history-list"></div>
         </section>
       </aside>
+
+      <div id="analytics-overlay" class="analytics-overlay" hidden>
+        <div class="analytics-head">
+          <h2>📊 Vault analytics</h2>
+          <div class="analytics-controls">
+            <label class="toggle"><input type="checkbox" id="an-file-only" /> File captures only</label>
+            <button class="btn tiny ghost" data-action="hide-analytics">Close ✕</button>
+          </div>
+        </div>
+        <div id="analytics-body" class="analytics-body"></div>
+      </div>
     </div>
 
     <script type="module" src="/src/main.js"></script>
