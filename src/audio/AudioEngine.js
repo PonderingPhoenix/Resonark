@@ -87,6 +87,9 @@ export class AudioEngine {
       if (this.mediaEl.src?.startsWith('blob:')) URL.revokeObjectURL(this.mediaEl.src)
       this.mediaEl = null
     }
+    // Clear the source type so a source-switch that fails/cancels after teardown
+    // (e.g. a denied mic prompt) doesn't leave a stale, mislabeling sourceType.
+    this.sourceType = null
   }
 
   /** Play a local audio File and route it through the analyser. Returns the <audio> element. */
@@ -153,8 +156,11 @@ export class AudioEngine {
     this.source.connect(this.analyser)
     // Intentionally NOT connected to destination.
 
-    // Reset when the user stops sharing from the browser's own UI.
-    const done = () => { if (this.sourceType === 'system' && this.onSourceEnded) this.onSourceEnded() }
+    // Reset when the user stops sharing from the browser's own UI. Bind to this
+    // specific stream's identity — after a teardown or source-switch this.stream
+    // changes, so a late 'ended' from the old (stopped) stream is ignored and
+    // can't clobber the UI or stop a recording on the new source.
+    const done = () => { if (this.stream === stream && this.onSourceEnded) this.onSourceEnded() }
     audioTracks[0].addEventListener('ended', done)
     stream.getVideoTracks().forEach((t) => t.addEventListener('ended', done))
 

@@ -126,8 +126,10 @@ const sessionSig = (s) => `${s.startedAt}|${s.kind}|${s.capturePath}|${s.duratio
 export async function bulkImport(sessions = [], references = []) {
   const db = await openDb()
   const existing = await listSessions()
+  const existingRefs = await listReferences()
   const seen = new Set(existing.map(sessionSig))
-  let added = 0, skipped = 0
+  const refCols = new Map(existingRefs.map((r) => [r.trackKey, r.spectrogramDims?.cols || 0]))
+  let added = 0, skipped = 0, refs = 0
 
   await new Promise((resolve, reject) => {
     const tx = db.transaction([SESSIONS, REFERENCES], 'readwrite')
@@ -143,10 +145,16 @@ export async function bulkImport(sessions = [], references = []) {
       added++
     }
     for (const raw of references) {
-      if (raw && raw.trackKey) rs.put(reviveSpectro(raw))
+      if (!raw || !raw.trackKey) continue
+      // Don't let an imported reference clobber a better (longer-capture) one.
+      const cols = raw.spectrogramDims?.cols || 0
+      if (cols <= (refCols.get(raw.trackKey) || 0) && refCols.has(raw.trackKey)) continue
+      refCols.set(raw.trackKey, cols)
+      rs.put(reviveSpectro(raw))
+      refs++
     }
     tx.oncomplete = () => resolve()
     tx.onerror = () => reject(tx.error)
   })
-  return { added, skipped, references: references.filter((r) => r && r.trackKey).length }
+  return { added, skipped, references: refs }
 }
