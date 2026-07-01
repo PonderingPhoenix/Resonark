@@ -464,6 +464,9 @@ document.addEventListener('click', (e) => {
     case 'hide-settings':
       settingsOverlay.hidden = true
       break
+    case 'hide-detail':
+      $('#detail-overlay').hidden = true
+      break
     case 'reset-settings':
       setFft.value = String(DEFAULT_SETTINGS.fftSize)
       setSmooth.value = String(DEFAULT_SETTINGS.smoothing)
