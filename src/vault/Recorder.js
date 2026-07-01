@@ -1,5 +1,6 @@
 import { computeFeatures, dominantBand } from '../audio/features.js'
 import { makeBands, downsample } from './fingerprint.js'
+import { trackKeyOf } from './trackKey.js'
 
 // Recorder turns a live listening session into a compact "fingerprint":
 //   - a downsampled spectrogram (outBins × up to maxColumns), and
@@ -71,7 +72,7 @@ export class Recorder {
 
   /**
    * Stop recording and build the session record to persist.
-   * @param {{title?:string, artist?:string}} label
+   * @param {{title?:string, artist?:string, spotify?:object}} label
    */
   finish(label = {}) {
     this.recording = false
@@ -93,15 +94,28 @@ export class Recorder {
       dynamicRange: a.maxRms === 0 ? 0 : a.maxRms - (a.minRms === Infinity ? 0 : a.minRms),
     }
 
+    const capturePath = this.engine.sourceType || 'unknown'
+    const fullLabel = {
+      title: (label.title || '').trim(),
+      artist: (label.artist || '').trim(),
+      source: capturePath,
+      ...(label.spotify ? { spotify: label.spotify } : {}),
+    }
     return {
       startedAt: this.wallStart,
       createdAt: Date.now(),
       durationMs: Date.now() - this.wallStart,
-      label: {
-        title: (label.title || '').trim(),
-        artist: (label.artist || '').trim(),
-        source: this.engine.sourceType || 'unknown',
-      },
+      kind: 'captured',
+      // Identity used to seed/inherit a track-keyed reference fingerprint.
+      trackKey: trackKeyOf(label.spotify, fullLabel),
+      // How the audio was captured. A 'file' capture is the decoded digital
+      // signal (a property of the recording — eligible to seed a shared
+      // reference fingerprint). A 'mic' capture is acoustic — it measures this
+      // speaker + room + volume, so it is environment-specific and must never
+      // be reused as a track's canonical spectrum.
+      capturePath,
+      referenceEligible: capturePath === 'file',
+      label: fullLabel,
       stats,
       dominant: dominantBand(stats),
       spectrogram: flat,

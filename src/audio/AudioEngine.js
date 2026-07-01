@@ -93,6 +93,10 @@ export class AudioEngine {
   get ready() { return !!this.analyser }
   get sampleRate() { return this.ctx ? this.ctx.sampleRate : 44100 }
   get binCount() { return this.analyser ? this.analyser.frequencyBinCount : this.fftSize / 2 }
+  // The analyser maps [minDecibels, maxDecibels] onto the 0..255 byte range;
+  // the Meter mode needs these to convert byte magnitudes back to dB.
+  get minDecibels() { return this.analyser ? this.analyser.minDecibels : -100 }
+  get maxDecibels() { return this.analyser ? this.analyser.maxDecibels : -30 }
 
   getFrequencyData() {
     if (this.analyser) this.analyser.getByteFrequencyData(this.freqData)
