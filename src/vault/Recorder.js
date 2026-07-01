@@ -108,13 +108,13 @@ export class Recorder {
       kind: 'captured',
       // Identity used to seed/inherit a track-keyed reference fingerprint.
       trackKey: trackKeyOf(label.spotify, fullLabel),
-      // How the audio was captured. A 'file' capture is the decoded digital
-      // signal (a property of the recording — eligible to seed a shared
-      // reference fingerprint). A 'mic' capture is acoustic — it measures this
-      // speaker + room + volume, so it is environment-specific and must never
-      // be reused as a track's canonical spectrum.
+      // How the audio was captured. 'file' and 'system' captures are the decoded
+      // digital signal (pre-speaker, a property of the recording — eligible to
+      // seed a shared reference fingerprint). A 'mic' capture is acoustic — it
+      // measures this speaker + room + volume, so it is environment-specific and
+      // must never be reused as a track's canonical spectrum.
       capturePath,
-      referenceEligible: capturePath === 'file',
+      referenceEligible: capturePath === 'file' || capturePath === 'system',
       label: fullLabel,
       stats,
       dominant: dominantBand(stats),

@@ -34,6 +34,7 @@
           <div class="hint-actions">
             <button class="btn primary" data-action="pick-file">Open audio file</button>
             <button class="btn" data-action="use-mic">Use microphone</button>
+            <button class="btn" data-action="use-system" id="system-btn-hint">Capture system audio</button>
           </div>
         </div>
       </main>
@@ -44,6 +45,7 @@
           <div class="row">
             <button class="btn" data-action="pick-file">📁 File</button>
             <button class="btn" data-action="use-mic">🎤 Mic</button>
+            <button class="btn" data-action="use-system" id="system-btn" title="Capture system / tab audio (clean, no mic)">🖥 System</button>
           </div>
           <input id="file-input" type="file" accept="audio/*" hidden />
           <div id="transport" class="transport" hidden>
@@ -113,7 +115,7 @@
         <div class="analytics-head">
           <h2>📊 Vault analytics</h2>
           <div class="analytics-controls">
-            <label class="toggle"><input type="checkbox" id="an-file-only" /> File captures only</label>
+            <label class="toggle" title="Exclude microphone captures (which include your speaker + room) from trends"><input type="checkbox" id="an-file-only" /> Digital only (exclude mic)</label>
             <button class="btn tiny ghost" data-action="hide-analytics">Close ✕</button>
           </div>
         </div>

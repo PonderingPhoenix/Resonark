@@ -36,7 +36,7 @@ npm run preview  # preview the production build
 
 | Concern | Implementation |
 |---|---|
-| Audio access | Web Audio API. `<audio>` + `MediaElementSource` for files, `getUserMedia` + `MediaStreamSource` for mic. |
+| Audio access | Web Audio API. `<audio>` + `MediaElementSource` for files, `getUserMedia` for mic, `getDisplayMedia` (tab/system audio) for hands-free loopback capture on desktop. |
 | Analysis | `AnalyserNode` FFT → byte frequency data, reduced to log-spaced bands + spectral features (loudness, centroid/brightness, bass/mid/treble energy, dynamic range). |
 | Visuals | Plain Canvas 2D. Each mode is a self-contained renderer in `src/visualizers/`. |
 | The vault | Recorded sessions are stored in **IndexedDB** as a flat `Uint8Array` spectrogram (64 bins × up to ~720 columns) plus aggregate stats. Compact by design — no raw PCM, no per-frame bloat. |
@@ -77,6 +77,7 @@ the spectrum actually means:
 | Capture | What it is | Where it's tapped | Reusable as a track's reference? |
 |---|---|---|---|
 | **File** 📁 | the decoded *digital* signal | inside the app, before the output device | **Yes** — it's a property of the recording (same regardless of BT speaker vs headphones) |
+| **System** 🖥 | system / tab audio via `getDisplayMedia` | the OS/browser audio bus, before the speaker | **Yes** — also a clean pre-speaker digital signal (hands-free capture of streamed audio) |
 | **Mic** 🎤 | the *acoustic* sound in the air | after the speaker + room | **No** — it measures this speaker, room, and volume at this moment |
 
 So playing the same track through a Bluetooth speaker vs. headphones gives the
@@ -174,9 +175,12 @@ src/
 
 - ✅ **Now-playing pairing** — auto-label each recorded fingerprint with the
   track Spotify reports, plus a recently-played history list. *(done)*
-- **System / loopback capture** on desktop (capture the OS audio bus instead of
-  the mic) for clean, hands-off recording of streamed audio.
+- ✅ **System / loopback capture** on desktop (`getDisplayMedia`) for clean,
+  hands-off recording of streamed audio. *(done)*
+- ✅ **Vault analytics** — trends, distributions, and the speaker/room
+  coloration signature. *(done)*
 - **Last.fm / Apple Music** as alternative metadata sources.
+- **Cross-user shared reference library** behind a backend.
 - **Vault analytics** — trends over time: how the brightness / dynamic range /
   bass balance of your listening shifts week to week.
 - **Capacitor wrapper** for Android/iOS.

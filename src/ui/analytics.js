@@ -28,6 +28,19 @@ function deltaText(delta, unit) {
   return `${s}${Math.abs(Math.round(delta))} ${unit} vs previous period`
 }
 
+// Fold min/max via a loop — spreading a per-session array into Math.min/Math.max
+// throws RangeError once it grows past the engine's argument limit (~10^5).
+function extentX(arr) {
+  let min = Infinity, max = -Infinity
+  for (const p of arr) { if (p.x < min) min = p.x; if (p.x > max) max = p.x }
+  return { min, max }
+}
+function maxOf(arr, key) {
+  let m = -Infinity
+  for (const p of arr) { const v = key ? p[key] : p; if (v > m) m = v }
+  return m
+}
+
 function panel(title, sub, cls = '') {
   const p = document.createElement('div')
   p.className = 'an-panel' + (cls ? ' ' + cls : '')
@@ -42,9 +55,15 @@ function note(p, text) {
   p.append(n)
 }
 
+let renderSeq = 0
+
 export async function renderAnalytics(root, opts = {}) {
-  const capturePath = opts.capturePath || null
+  const seq = ++renderSeq
+  const digitalOnly = !!opts.digitalOnly
   const [sessions, references] = await Promise.all([listSessions(), listReferences()])
+  // A newer render started while we were awaiting the DB — let it win, don't
+  // repaint stale data over it.
+  if (seq !== renderSeq) return
   const refMap = new Map(references.map((r) => [r.trackKey, r]))
 
   root.innerHTML = ''
@@ -62,7 +81,7 @@ export async function renderAnalytics(root, opts = {}) {
     draws.push({ canvas: c, h, fn })
   }
   const grid = (cls = '') => { const g = document.createElement('div'); g.className = 'an-grid' + (cls ? ' ' + cls : ''); root.append(g); return g }
-  const cpNote = capturePath === 'file' ? 'file captures only' : 'file + mic'
+  const cpNote = digitalOnly ? 'digital only (no mic)' : 'all captures'
 
   // ===== Section A — Overview =====
   const kpis = A.listeningStats(sessions)
@@ -90,13 +109,12 @@ export async function renderAnalytics(root, opts = {}) {
 
   // ===== Section B — Sound character (captured) =====
   const gB = grid()
-  const bt = A.brightnessTrend(sessions, { capturePath })
+  const bt = A.brightnessTrend(sessions, { digitalOnly })
   const pBright = panel('Brightness', `${deltaText(bt.delta, 'Hz')} · ${cpNote}`)
   if (!bt.points.length) note(pBright, 'No captured audio yet.')
   else addChart(pBright, 130, (c, w, h) => {
-    const xs = bt.points.map((p) => p.x)
-    const xMin = Math.min(...xs), xMax = Math.max(...xs)
-    const yMax = Math.max(...bt.points.map((p) => p.y)) * 1.15 || 1
+    const { min: xMin, max: xMax } = extentX(bt.points)
+    const yMax = maxOf(bt.points, 'y') * 1.15 || 1
     timeSeries(c, w, h, {
       series: [
         { points: bt.points, color: 'rgba(120,180,255,0.55)', width: 0, dots: true },
@@ -107,12 +125,11 @@ export async function renderAnalytics(root, opts = {}) {
   })
   gB.append(pBright)
 
-  const lt = A.loudnessTrend(sessions, { capturePath })
+  const lt = A.loudnessTrend(sessions, { digitalOnly })
   const pLoud = panel('Loudness & dynamics', `level 0–255 · ${cpNote}`)
   if (!lt.rows.length) note(pLoud, 'No captured audio yet.')
   else addChart(pLoud, 130, (c, w, h) => {
-    const xs = lt.rows.map((r) => r.x)
-    const xMin = Math.min(...xs), xMax = Math.max(...xs)
+    const { min: xMin, max: xMax } = extentX(lt.rows)
     timeSeries(c, w, h, {
       bands: [{ points: lt.rows.map((r) => ({ x: r.x, lo: r.avg, hi: r.peak })), color: 'rgba(255,177,61,0.14)' }],
       series: [
@@ -125,7 +142,7 @@ export async function renderAnalytics(root, opts = {}) {
   legend(pLoud, [['peak', SERIES.treble], ['average', SERIES.mid], ['dynamic range', 'rgba(255,177,61,0.4)']])
   gB.append(pLoud)
 
-  const tb = A.tonalBalance(sessions, { capturePath })
+  const tb = A.tonalBalance(sessions, { digitalOnly })
   const pBal = panel('Tonal balance', tb.n ? `${tb.n} captures · ${cpNote}` : 'no data')
   addChart(pBal, 60, (c, w, h) => stackedBar100(c, w, h, [
     { label: 'bass', value: tb.bass, color: SERIES.bass },
@@ -145,7 +162,7 @@ export async function renderAnalytics(root, opts = {}) {
 
   // ===== Section C — Spectrum & gear signature =====
   const gC = grid()
-  const av = A.avgLibrarySpectrum(sessions, { capturePath })
+  const av = A.avgLibrarySpectrum(sessions, { digitalOnly })
   const pSpec = panel('Average library spectrum', `${av.n} captures · approx Hz`, 'span2')
   if (!av.n) note(pSpec, 'No captured spectra yet.')
   else addChart(pSpec, 150, (c, w, h) => areaCurve(c, w, h, av.spectrum, { yMax: 255, freqLabels: freqLabels() }))

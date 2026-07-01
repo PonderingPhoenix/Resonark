@@ -16,6 +16,9 @@ const ACTIVE_FLOOR = 8 // byte magnitude below which a bin is treated as silent
 
 const isCaptured = (s) => s.kind === 'captured'
 const hasSpectro = (s) => !!(s.spectrogram && s.spectrogramDims && s.spectrogramDims.cols > 0)
+// `digitalOnly` excludes acoustic (mic) captures — file + system audio are both
+// pre-speaker digital signals and stay comparable; mic folds in speaker + room.
+const digitalPass = (s, digitalOnly) => !digitalOnly || s.capturePath !== 'mic'
 
 function keyOf(s) {
   if (s.trackKey) return s.trackKey
@@ -100,8 +103,8 @@ export function activityHeatmap(sessions) {
 }
 
 // ---- Bucketed mean of a captured stat field (for trends) ----
-function bucketMeans(sessions, field, { capturePath, dropZero = false } = {}) {
-  const cap = sessions.filter(isCaptured).filter((s) => !capturePath || s.capturePath === capturePath)
+function bucketMeans(sessions, field, { digitalOnly = false, dropZero = false } = {}) {
+  const cap = sessions.filter(isCaptured).filter((s) => digitalPass(s, digitalOnly))
   const unit = autoBucketUnit(cap)
   const groups = new Map()
   for (const s of cap) {
@@ -120,19 +123,19 @@ function bucketMeans(sessions, field, { capturePath, dropZero = false } = {}) {
 }
 
 export function brightnessTrend(sessions, opts = {}) {
-  const cp = opts.capturePath
+  const digitalOnly = !!opts.digitalOnly
   const points = sessions.filter(isCaptured)
-    .filter((s) => !cp || s.capturePath === cp)
+    .filter((s) => digitalPass(s, digitalOnly))
     .filter((s) => (s.stats?.avgCentroid || 0) > 0)
     .sort((a, b) => a.startedAt - b.startedAt)
     .map((s) => ({ x: s.startedAt, y: s.stats.avgCentroid }))
-  return { points, ...bucketMeans(sessions, 'avgCentroid', { capturePath: cp, dropZero: true }) }
+  return { points, ...bucketMeans(sessions, 'avgCentroid', { digitalOnly, dropZero: true }) }
 }
 
 export function loudnessTrend(sessions, opts = {}) {
-  const cp = opts.capturePath
+  const digitalOnly = !!opts.digitalOnly
   const rows = sessions.filter(isCaptured)
-    .filter((s) => (!cp || s.capturePath === cp) && s.stats)
+    .filter((s) => digitalPass(s, digitalOnly) && s.stats)
     .sort((a, b) => a.startedAt - b.startedAt)
     .map((s) => ({
       x: s.startedAt,
@@ -146,8 +149,8 @@ export function loudnessTrend(sessions, opts = {}) {
 
 // ---- Tonal balance: mean of per-session normalized bass/mid/treble shares ----
 export function tonalBalance(sessions, opts = {}) {
-  const cp = opts.capturePath
-  const cap = sessions.filter(isCaptured).filter((s) => (!cp || s.capturePath === cp) && s.stats)
+  const digitalOnly = !!opts.digitalOnly
+  const cap = sessions.filter(isCaptured).filter((s) => digitalPass(s, digitalOnly) && s.stats)
   let bass = 0, mid = 0, treble = 0, n = 0
   for (const s of cap) {
     const b = s.stats.bass || 0, m = s.stats.mid || 0, t = s.stats.treble || 0
@@ -187,8 +190,8 @@ export function levelNormalize(curve, floor = ACTIVE_FLOOR) {
 }
 
 export function avgLibrarySpectrum(sessions, opts = {}) {
-  const cp = opts.capturePath
-  const cap = sessions.filter(isCaptured).filter((s) => (!cp || s.capturePath === cp) && hasSpectro(s))
+  const digitalOnly = !!opts.digitalOnly
+  const cap = sessions.filter(isCaptured).filter((s) => digitalPass(s, digitalOnly) && hasSpectro(s))
   const acc = new Float32Array(BINS)
   if (!cap.length) return { spectrum: acc, n: 0 }
   for (const s of cap) {
@@ -212,11 +215,13 @@ export function colorationPairs(sessions, referencesMap) {
     const mic = levelNormalize(micRaw).curve
     const rf = levelNormalize(refRaw).curve
     const delta = new Float32Array(BINS)
-    let active = 0
+    const active = new Uint8Array(BINS) // 1 where BOTH curves had signal (a real measurement)
+    let activeCount = 0
     for (let b = 0; b < BINS; b++) {
       const co = micRaw[b] > ACTIVE_FLOOR && refRaw[b] > ACTIVE_FLOOR
       delta[b] = co ? mic[b] - rf[b] : 0
-      if (co) active++
+      active[b] = co ? 1 : 0
+      if (co) activeCount++
     }
     const strong = isStrongKey(s.trackKey)
     pairs.push({
@@ -224,20 +229,29 @@ export function colorationPairs(sessions, referencesMap) {
       title: s.label?.title || ref.title || '',
       artist: s.label?.artist || ref.artist || '',
       delta,
-      activeBins: active,
+      active,
+      activeBins: activeCount,
       strong,
-      confidence: active >= 6 && strong ? 'ok' : 'low',
+      confidence: activeCount >= 6 && strong ? 'ok' : 'low',
     })
   }
   return pairs
 }
 
-/** Aggregate per-bin coloration across pairs using the median (robust to a clipped outlier). */
+/**
+ * Aggregate per-bin coloration across pairs using the median. Only pairs whose
+ * bin was actually co-active contribute — a bin that a pair never measured
+ * (structural zero) must not be conflated with a real 0 delta, or it would drag
+ * the median toward zero and understate coloration in sparsely-measured bands.
+ */
 export function aggregateColoration(pairs) {
   if (!pairs.length) return { delta: new Float32Array(BINS), n: 0 }
   const out = new Float32Array(BINS)
   for (let b = 0; b < BINS; b++) {
-    const vals = pairs.map((p) => p.delta[b]).sort((a, z) => a - z)
+    const vals = []
+    for (const p of pairs) if (!p.active || p.active[b]) vals.push(p.delta[b])
+    if (!vals.length) { out[b] = 0; continue }
+    vals.sort((a, z) => a - z)
     const m = Math.floor(vals.length / 2)
     out[b] = vals.length % 2 ? vals[m] : (vals[m - 1] + vals[m]) / 2
   }

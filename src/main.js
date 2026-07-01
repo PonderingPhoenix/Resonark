@@ -179,6 +179,32 @@ async function startMic() {
   }
 }
 
+async function startSystem() {
+  try {
+    await engine.useSystemAudio()
+    vizEdges = null
+    hint.hidden = true
+    readouts.hidden = false
+    transport.hidden = true
+    sourceName.textContent = 'System / tab audio'
+  } catch (err) {
+    // The user cancelling the share picker throws NotAllowedError — stay silent for that.
+    if (err && err.name === 'NotAllowedError') return
+    alert('Could not capture system audio: ' + err.message)
+  }
+}
+
+// Called when a live capture ends on its own (e.g. the user clicks the browser's
+// "Stop sharing"). Reset back to the idle state.
+function handleSourceEnded() {
+  if (recorder.recording) stopRecording()
+  readouts.hidden = true
+  transport.hidden = true
+  sourceName.textContent = ''
+  hint.hidden = false
+}
+engine.onSourceEnded = handleSourceEnded
+
 // ---- Spotify pairing ----
 function refreshSpotifyUi() {
   const connected = spotify.isConnected()
@@ -350,7 +376,7 @@ function startRecording() {
 
 // ---- Analytics ----
 function renderAnalyticsView() {
-  return renderAnalytics(analyticsBody, { capturePath: fileOnlyToggle.checked ? 'file' : null })
+  return renderAnalytics(analyticsBody, { digitalOnly: fileOnlyToggle.checked })
 }
 function openAnalytics() {
   analyticsOverlay.hidden = false
@@ -375,6 +401,9 @@ document.addEventListener('click', (e) => {
       break
     case 'use-mic':
       startMic()
+      break
+    case 'use-system':
+      startSystem()
       break
     case 'playpause':
       if (engine.mediaEl) {
@@ -446,6 +475,10 @@ seek.addEventListener('input', () => {
 })
 
 // ---- Boot ----
+// Hide the system-audio buttons where the browser can't capture it (mobile, etc.).
+if (!engine.supportsSystemAudio) {
+  document.querySelectorAll('[data-action="use-system"]').forEach((b) => { b.hidden = true })
+}
 resize()
 ensureEdges()
 applyOverlay()
