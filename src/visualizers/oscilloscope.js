@@ -3,6 +3,7 @@
 export const oscilloscope = {
   name: 'oscilloscope',
   label: 'Wave',
+  desc: "The raw sound wave, drawn live — the actual shape of what you're hearing.",
 
   draw({ ctx, w, h, time, features }) {
     ctx.fillStyle = 'rgba(5,6,10,0.35)'

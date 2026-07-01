@@ -7,6 +7,7 @@ import { heat } from '../utils/colors.js'
 export const spectrogram = {
   name: 'spectrogram',
   label: 'Waterfall',
+  desc: 'A scrolling heat-map of the sound over time — brighter means louder at that pitch.',
   _c: null,
   _x: null,
   _w: 0,

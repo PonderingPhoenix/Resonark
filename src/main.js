@@ -70,6 +70,8 @@ const analyticsBody = $('#analytics-body')
 const fileOnlyToggle = $('#an-file-only')
 const importInput = $('#import-input')
 const settingsOverlay = $('#settings-overlay')
+const introOverlay = $('#intro-overlay')
+const modeDesc = $('#mode-desc')
 const setFft = $('#set-fft')
 const setSmooth = $('#set-smooth')
 const setMinDb = $('#set-mindb')
@@ -103,9 +105,15 @@ visualizers.forEach((v, i) => {
     modeButtons.querySelectorAll('.mode').forEach((x) => x.classList.remove('active'))
     b.classList.add('active')
     applyOverlay()
+    updateModeDesc()
   })
   modeButtons.append(b)
 })
+
+// Show a plain-language description of the current visual mode under the buttons.
+function updateModeDesc() {
+  if (modeDesc) modeDesc.textContent = activeViz.desc || ''
+}
 
 // The Meter mode draws its own readouts on the canvas, so the DOM overlay
 // (brand + meter bars) would collide with it — hide the overlay in Meter mode.
@@ -489,6 +497,13 @@ document.addEventListener('click', (e) => {
     case 'hide-settings':
       settingsOverlay.hidden = true
       break
+    case 'show-intro':
+      introOverlay.hidden = false
+      break
+    case 'hide-intro':
+      introOverlay.hidden = true
+      try { localStorage.setItem('ev_seen_intro', '1') } catch { /* private mode */ }
+      break
     case 'hide-detail':
       $('#detail-overlay').hidden = true
       break
@@ -588,7 +603,7 @@ seek.addEventListener('input', () => {
 })
 
 // ---- Keyboard shortcuts ----
-const overlays = () => [settingsOverlay, analyticsOverlay, document.getElementById('detail-overlay')]
+const overlays = () => [settingsOverlay, analyticsOverlay, introOverlay, document.getElementById('detail-overlay')]
 const anyOverlayOpen = () => overlays().some((o) => o && !o.hidden)
 const closeOverlays = () => overlays().forEach((o) => { if (o) o.hidden = true })
 
@@ -616,6 +631,7 @@ window.addEventListener('keydown', (e) => {
   if (k === 'm') { startMic(); return }
   if (k === 's') { if (engine.supportsSystemAudio) startSystem(); return }
   if (k === 'a') { openAnalytics(); return }
+  if (k === 'h' || e.key === '?') { introOverlay.hidden = false; return }
   if (e.key >= '1' && e.key <= '9') {
     const btn = modeButtons.querySelectorAll('.mode')[Number(e.key) - 1]
     if (btn) btn.click()
@@ -630,8 +646,18 @@ if (!engine.supportsSystemAudio) {
 resize()
 ensureEdges()
 applyOverlay()
+updateModeDesc()
 renderHistory(historyList)
 requestAnimationFrame(loop)
+
+// First visit: show the friendly "how it works" intro once. Marking it seen here
+// (rather than only on dismiss) means any way of closing it sticks.
+try {
+  if (!localStorage.getItem('ev_seen_intro')) {
+    introOverlay.hidden = false
+    localStorage.setItem('ev_seen_intro', '1')
+  }
+} catch { /* private mode — just skip the auto-intro */ }
 
 // Browsers start an AudioContext suspended until a user gesture (autoplay
 // policy). Resume it on the first interaction so an auto-started mic goes live.

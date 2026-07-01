@@ -5,6 +5,7 @@ import { bandHue } from '../utils/colors.js'
 export const bars = {
   name: 'bars',
   label: 'Bars',
+  desc: 'A classic equalizer — bass on the left, treble on the right. Bars jump and glow on the beat.',
   _peaks: null,
 
   draw({ ctx, w, h, bands, features }) {
