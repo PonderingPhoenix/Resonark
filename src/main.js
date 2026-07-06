@@ -808,6 +808,35 @@ function refreshLibraryIfOpen() {
   if (!libraryOverlay.hidden) renderLibrary(libraryBody, { query: libSearch.value })
 }
 
+/**
+ * One-tap import of the curated starter reference pack shipped with the app.
+ * It's a fingerprint-only bundle (no audio) so recognition works out of the
+ * box before you've scanned any of your own music.
+ */
+async function loadStarterLibrary() {
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}starter-references.json`, { cache: 'no-cache' })
+    if (!res.ok) throw new Error('unavailable')
+    const data = await res.json()
+    const refs = (Array.isArray(data) ? data : data.references) || []
+    if (!refs.length) {
+      alert('The starter library hasn’t been curated yet. Use 📂 Scan to add your own music.')
+      return
+    }
+    const result = await bulkImport([], refs)
+    await refreshHistory()
+    refreshAnalyticsIfOpen()
+    refreshLibraryIfOpen()
+    const already = refs.length - result.references
+    alert(
+      `Added ${result.references} song${result.references === 1 ? '' : 's'} from the starter library` +
+      (already > 0 ? ` (${already} already in your library).` : '.'),
+    )
+  } catch {
+    alert('Couldn’t load the starter library — check your connection and try again.')
+  }
+}
+
 // ---- Settings ----
 function syncSettingsUI() {
   setFft.value = String(settings.fftSize)
@@ -885,6 +914,9 @@ document.addEventListener('click', (e) => {
       break
     case 'show-library':
       openLibrary()
+      break
+    case 'load-starter':
+      loadStarterLibrary()
       break
     case 'hide-library':
       libraryOverlay.hidden = true
