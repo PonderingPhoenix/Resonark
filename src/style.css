@@ -295,6 +295,16 @@ body { overflow: hidden; }
 .history.empty [data-action="bulk-select-all"],
 .history.empty [data-action="export-all"] { display: none; }
 
+/* ---- "Sounds like…?" match suggestion ---- */
+.match-suggest {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 8px 10px; margin-bottom: 8px;
+  background: rgba(90, 209, 160, 0.12); border: 1px solid rgba(90, 209, 160, 0.4); border-radius: 8px;
+}
+.ms-text { flex: 1; min-width: 0; font-size: 12.5px; color: #cfeee0; line-height: 1.35; }
+.ms-score { color: var(--muted); font-size: 11px; }
+.ms-actions { display: flex; gap: 6px; }
+
 /* ---- Now-playing pill (overlaid, top-center of the stage) ---- */
 .now-bar {
   position: absolute; z-index: 6;

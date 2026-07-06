@@ -197,8 +197,44 @@ function card(session, refs, onChange, opts = {}) {
   actions.append(del)
 
   body.append(title, artist, meta, chips, actions)
+  // "Sounds like…?" suggestion for a just-recorded, unlabeled capture.
+  if (opts.suggestion && opts.suggestion.sessionId === session.id) {
+    body.prepend(suggestBanner(opts.suggestion, opts))
+  }
   el.append(thumb, body)
   return el
+}
+
+function suggestBanner(sug, opts) {
+  const banner = document.createElement('div')
+  banner.className = 'match-suggest'
+  const name = sug.artist ? `${sug.title} — ${sug.artist}` : sug.title
+
+  const text = document.createElement('span')
+  text.className = 'ms-text'
+  text.append('🎯 Sounds like ')
+  const strong = document.createElement('b')
+  strong.textContent = name
+  text.append(strong)
+  const score = document.createElement('span')
+  score.className = 'ms-score'
+  score.textContent = ` · ${Math.round(sug.score * 100)}% match`
+  text.append(score)
+
+  const acts = document.createElement('div')
+  acts.className = 'ms-actions'
+  const apply = document.createElement('button')
+  apply.className = 'btn tiny'
+  apply.textContent = 'Apply'
+  apply.addEventListener('click', () => opts.onApplySuggestion && opts.onApplySuggestion())
+  const dismiss = document.createElement('button')
+  dismiss.className = 'btn tiny ghost'
+  dismiss.textContent = 'Dismiss'
+  dismiss.addEventListener('click', () => opts.onDismissSuggestion && opts.onDismissSuggestion())
+  acts.append(apply, dismiss)
+
+  banner.append(text, acts)
+  return banner
 }
 
 // Where a session's spectrogram + stats live (its own, or an inherited reference).
