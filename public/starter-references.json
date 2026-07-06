@@ -1,0 +1,6 @@
+{
+  "name": "EchoVault starter library",
+  "note": "Curated fingerprint pack. Regenerate with `node scripts/make-seed-pack.mjs <export.json> -o public/starter-references.json` from an EchoVault vault export. References only — no audio, no sessions.",
+  "count": 0,
+  "references": []
+}

@@ -15,9 +15,26 @@ export async function renderLibrary(bodyEl, opts = {}) {
 
   bodyEl.innerHTML = ''
   if (!refs.length) {
-    const empty = document.createElement('p')
-    empty.className = 'muted empty an-empty'
-    empty.textContent = 'Your library is empty. Hit 🎵 Scan to add a music folder, or record a track — recognized songs collect here.'
+    const empty = document.createElement('div')
+    empty.className = 'lib-empty'
+    const heading = document.createElement('p')
+    heading.className = 'lib-empty-title'
+    heading.textContent = 'Your library is empty'
+    const blurb = document.createElement('p')
+    blurb.className = 'muted small'
+    blurb.textContent = 'Load the starter pack to get recognizable songs instantly, or scan your own music folder. Songs you record also collect here.'
+    const actions = document.createElement('div')
+    actions.className = 'lib-empty-actions'
+    const starter = document.createElement('button')
+    starter.className = 'btn'
+    starter.dataset.action = 'load-starter'
+    starter.textContent = '✨ Load starter library'
+    const scan = document.createElement('button')
+    scan.className = 'btn ghost'
+    scan.dataset.action = 'scan-library'
+    scan.textContent = '📂 Scan my music'
+    actions.append(starter, scan)
+    empty.append(heading, blurb, actions)
     bodyEl.append(empty)
     return
   }

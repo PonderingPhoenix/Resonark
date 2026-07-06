@@ -333,6 +333,9 @@ body { overflow: hidden; }
 .lib-del { flex: none; background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 6px 9px; border-radius: 6px; }
 .lib-del:hover { color: var(--rec); background: rgba(255, 77, 94, 0.08); }
 @media (max-width: 520px) { .lib-badges .mood-chip { display: none; } }
+.lib-empty { max-width: 460px; padding: 18px 4px; }
+.lib-empty-title { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.lib-empty-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 
 /* ---- Now-playing pill (overlaid, top-center of the stage) ---- */
 .now-bar {
