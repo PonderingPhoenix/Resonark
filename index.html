@@ -50,21 +50,23 @@
       <aside id="panel">
         <button id="install-btn" class="btn tiny install-btn" data-action="install-app" hidden>⬇ Install EchoVault as an app</button>
 
+        <nav class="panel-nav">
+          <button class="btn tiny nav-btn" data-action="show-analytics" title="Listening analytics">📊 Analytics</button>
+          <button class="btn tiny nav-btn" data-action="show-library" title="Browse every song EchoVault knows">🎵 Library</button>
+          <span class="nav-spacer"></span>
+          <button class="btn tiny ghost icon" data-action="show-intro" title="How EchoVault works">ⓘ</button>
+          <button class="btn tiny ghost icon" data-action="show-settings" title="Settings">⚙</button>
+        </nav>
+
         <section class="source">
-          <div class="section-head">
-            <h2>Source</h2>
-            <div class="head-actions">
-              <button class="btn tiny ghost icon" data-action="show-intro" title="How EchoVault works">ⓘ</button>
-              <button class="btn tiny ghost icon" data-action="show-settings" title="Analyzer settings">⚙</button>
-            </div>
-          </div>
+          <h2 class="sec-title">Source</h2>
           <div class="row">
             <button class="btn" data-action="pick-file">📁 File</button>
             <button class="btn" data-action="use-mic">🎤 Mic</button>
             <button class="btn" data-action="use-system" id="system-btn" title="Capture another tab's sound (e.g. YouTube) — clean, no mic">🖥 System</button>
           </div>
           <p id="system-tip" class="muted small system-tip" hidden>
-            💡 New here? <b>🎵 File</b> (open a song) or <b>🎤 Mic</b> (listen to the room) are the easy ways in. <b>🖥 System</b> is advanced — the browser pops up a long list of windows; ignore the odd names, pick the one playing your music, and turn on its audio.
+            💡 <b>File</b> or <b>Mic</b> are easiest. <b>System</b> captures another tab's sound (advanced).
           </p>
           <input id="file-input" type="file" accept="audio/*" hidden />
           <div id="transport" class="transport" hidden>
@@ -104,8 +106,7 @@
         </section>
 
         <section class="record">
-          <h2>Vault</h2>
-          <p class="muted small">Save a snapshot of how this sounds — you'll build a little library over time.</p>
+          <h2 class="sec-title">Vault</h2>
 
           <label class="auto-cap">
             <input type="checkbox" id="auto-capture" />
@@ -151,18 +152,11 @@
         <section class="history empty" id="history-section">
           <div class="history-head">
             <h2>History</h2>
-            <div class="history-actions">
-              <button class="btn tiny" data-action="show-analytics" title="Open vault analytics">📊 Analytics</button>
-              <button class="btn tiny ghost" data-action="show-library" title="Browse every song EchoVault knows">🎵 Library</button>
-              <button class="btn tiny ghost" data-action="bulk-select-all" title="Select all shown for bulk actions">☑ Select</button>
-              <button class="btn tiny ghost" data-action="scan-library" title="Scan a music folder for tags + fingerprints so EchoVault can recognize those songs">📂 Scan</button>
-              <button class="btn tiny ghost" data-action="export-all" title="Export the whole vault as JSON">Export</button>
-              <button class="btn tiny ghost" data-action="import-vault" title="Import a vault export (merges, skips duplicates)">Import</button>
-              <input id="import-input" type="file" accept="application/json,.json" hidden />
-              <input id="scan-input" type="file" accept="audio/*" multiple webkitdirectory hidden />
-              <input id="scan-files-input" type="file" accept="audio/*" multiple hidden />
-            </div>
+            <button class="btn tiny ghost" data-action="bulk-select-all" title="Select recordings for bulk delete">☑ Select</button>
           </div>
+          <input id="import-input" type="file" accept="application/json,.json" hidden />
+          <input id="scan-input" type="file" accept="audio/*" multiple webkitdirectory hidden />
+          <input id="scan-files-input" type="file" accept="audio/*" multiple hidden />
           <div class="history-filter">
             <input id="history-search" class="history-search" type="search" placeholder="Search title or artist…" aria-label="Search vault" />
             <select id="history-mood" class="opt-select" aria-label="Filter by mood"></select>
@@ -290,6 +284,14 @@
               <button class="btn tiny ghost" data-action="reset-settings">Reset to defaults</button>
             </div>
             <p class="muted small">Higher detail is sharper but a touch less snappy. The cutoffs set the loud/quiet range the Meter shows. Changes apply instantly and are remembered.</p>
+            <div class="set-data">
+              <div class="detail-chart-label">Your data</div>
+              <div class="row">
+                <button class="btn tiny ghost" data-action="export-all">⬇ Export vault</button>
+                <button class="btn tiny ghost" data-action="import-vault">⬆ Import vault</button>
+              </div>
+              <p class="muted small">A JSON backup of your recordings + library. Import merges and skips duplicates.</p>
+            </div>
             <div class="kbd-help">
               <div class="detail-chart-label">Keyboard</div>
               <div class="kbd-list">
@@ -307,6 +309,7 @@
         <div class="analytics-head">
           <h2>🎵 Library</h2>
           <div class="analytics-controls">
+            <button class="btn tiny" data-action="scan-library" title="Scan a music folder or files to add songs">📂 Scan music</button>
             <input id="lib-search" class="history-search lib-search" type="search" placeholder="Search title or artist…" aria-label="Search library" />
             <button class="btn tiny ghost" data-action="hide-library">Close ✕</button>
           </div>
