@@ -7,6 +7,7 @@ import { saveSession, upsertReferenceFromSession, bulkImport, deleteSession, lis
 import { trackKeyOf, isStrongKey } from './vault/trackKey.js'
 import { bestMatch } from './vault/match.js'
 import { readTags } from './audio/tags.js'
+import { scanLibrary } from './vault/libraryScan.js'
 import { visualizers, getVisualizer, READOUT_MODES } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
 import { renderAnalytics } from './ui/analytics.js'
@@ -94,6 +95,8 @@ const analyticsOverlay = $('#analytics-overlay')
 const analyticsBody = $('#analytics-body')
 const fileOnlyToggle = $('#an-file-only')
 const importInput = $('#import-input')
+const scanInput = $('#scan-input')
+const scanOverlay = $('#scan-overlay')
 const settingsOverlay = $('#settings-overlay')
 const introOverlay = $('#intro-overlay')
 const installBtn = $('#install-btn')
@@ -852,6 +855,12 @@ document.addEventListener('click', (e) => {
     case 'import-vault':
       importInput.click()
       break
+    case 'scan-library':
+      scanInput.click()
+      break
+    case 'hide-scan':
+      scanOverlay.hidden = true
+      break
     case 'show-settings':
       settingsOverlay.hidden = false
       break
@@ -1008,6 +1017,49 @@ importInput.addEventListener('change', (e) => {
   if (file) importVault(file)
   importInput.value = '' // allow re-importing the same file
 })
+
+scanInput.addEventListener('change', (e) => {
+  const files = e.target.files
+  if (files && files.length) runLibraryScan(files)
+  scanInput.value = '' // allow re-scanning the same folder
+})
+
+async function runLibraryScan(files) {
+  const status = $('#scan-status')
+  const fill = $('#scan-bar-fill')
+  const detail = $('#scan-detail')
+  const done = $('#scan-done')
+  const close = $('#scan-close')
+  scanOverlay.hidden = false
+  done.hidden = true
+  close.hidden = true
+  status.textContent = 'Scanning your library…'
+  fill.style.width = '0%'
+  detail.textContent = ''
+
+  const res = await scanLibrary(files, {
+    fftSize: settings.fftSize,
+    minDb: settings.minDb,
+    maxDb: settings.maxDb,
+    onProgress: (p) => {
+      fill.style.width = `${p.total ? Math.round((p.scanned / p.total) * 100) : 0}%`
+      status.textContent = `Scanning… ${p.scanned} / ${p.total}`
+      detail.textContent = `${p.fingerprinted} fingerprinted · ${p.added} new · ${p.skipped} without tags`
+    },
+  })
+
+  fill.style.width = '100%'
+  status.textContent = res.total
+    ? `Done — ${res.added} song${res.added === 1 ? '' : 's'} added to your library from ${res.total} file${res.total === 1 ? '' : 's'}.`
+    : 'No audio files found in that selection.'
+  detail.textContent = res.total
+    ? `${res.fingerprinted} fingerprinted for sound-matching · ${res.skipped} skipped (no title/artist tags)` + (res.failed ? ` · ${res.failed} errored` : '')
+    : ''
+  done.hidden = false
+  close.hidden = false
+  await refreshHistory()
+  refreshAnalyticsIfOpen()
+}
 
 seek.addEventListener('input', () => {
   const el = engine.mediaEl
