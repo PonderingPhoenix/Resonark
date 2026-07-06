@@ -305,6 +305,11 @@ body { overflow: hidden; }
 .ms-score { color: var(--muted); font-size: 11px; }
 .ms-actions { display: flex; gap: 6px; }
 
+/* ---- Library scan progress ---- */
+.scan-status { margin: 0 0 2px; font-size: 14px; color: var(--text); }
+.scan-bar { height: 8px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.scan-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.15s linear; }
+
 /* ---- Now-playing pill (overlaid, top-center of the stage) ---- */
 .now-bar {
   position: absolute; z-index: 6;

@@ -154,9 +154,11 @@
             <div class="history-actions">
               <button class="btn tiny" data-action="show-analytics" title="Open vault analytics">📊 Analytics</button>
               <button class="btn tiny ghost" data-action="bulk-select-all" title="Select all shown for bulk actions">☑ Select</button>
+              <button class="btn tiny ghost" data-action="scan-library" title="Scan a music folder for tags + fingerprints so EchoVault can recognize those songs">🎵 Scan</button>
               <button class="btn tiny ghost" data-action="export-all" title="Export the whole vault as JSON">Export</button>
               <button class="btn tiny ghost" data-action="import-vault" title="Import a vault export (merges, skips duplicates)">Import</button>
               <input id="import-input" type="file" accept="application/json,.json" hidden />
+              <input id="scan-input" type="file" accept="audio/*" multiple webkitdirectory hidden />
             </div>
           </div>
           <div class="history-filter">
@@ -218,6 +220,24 @@
             <p class="muted small">Reopen this anytime with the <b>ⓘ</b> button up top. No account needed — everything stays on your device.</p>
             <div class="modal-actions">
               <button class="btn primary" data-action="hide-intro">Got it — let's go</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scan-overlay" class="modal-overlay" hidden>
+        <div class="modal">
+          <div class="modal-head">
+            <h2>🎵 Scan library</h2>
+            <button class="btn tiny ghost" data-action="hide-scan" id="scan-close" hidden>✕</button>
+          </div>
+          <div class="modal-body">
+            <p id="scan-status" class="scan-status">Reading your files…</p>
+            <div class="scan-bar"><i id="scan-bar-fill"></i></div>
+            <p id="scan-detail" class="muted small"></p>
+            <p class="muted small">Reads each file's tags and, where your browser can decode it, a sound fingerprint — so EchoVault recognizes these songs later. Everything stays on your device.</p>
+            <div class="modal-actions">
+              <button class="btn primary" data-action="hide-scan" id="scan-done" hidden>Done</button>
             </div>
           </div>
         </div>
