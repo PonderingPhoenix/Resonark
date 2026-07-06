@@ -231,6 +231,7 @@ body { overflow: hidden; }
 
 /* ---- History ---- */
 .history-head { display: flex; align-items: center; justify-content: space-between; }
+.history-head-actions { display: flex; align-items: center; gap: 6px; }
 .history-list { display: flex; flex-direction: column; gap: 10px; }
 .empty { padding: 6px 2px; }
 .card {
@@ -302,6 +303,7 @@ body { overflow: hidden; }
    row of options for an empty list. Import stays available. */
 .history.empty .history-filter { display: none; }
 .history.empty [data-action="bulk-select-all"] { display: none; }
+.history.empty [data-action="rescan-history"] { display: none; }
 
 /* ---- "Sounds like…?" match suggestion ---- */
 .match-suggest {
