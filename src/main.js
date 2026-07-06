@@ -11,6 +11,7 @@ import { scanLibrary } from './vault/libraryScan.js'
 import { visualizers, getVisualizer, READOUT_MODES } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
 import { renderAnalytics } from './ui/analytics.js'
+import { renderLibrary } from './ui/library.js'
 import { SpotifyClient } from './integrations/spotify.js'
 import { loadSettings, saveSettings, DEFAULT_SETTINGS } from './settings.js'
 import { PALETTES } from './utils/colors.js'
@@ -97,6 +98,9 @@ const fileOnlyToggle = $('#an-file-only')
 const importInput = $('#import-input')
 const scanInput = $('#scan-input')
 const scanOverlay = $('#scan-overlay')
+const libraryOverlay = $('#library-overlay')
+const libraryBody = $('#library-body')
+const libSearch = $('#lib-search')
 const settingsOverlay = $('#settings-overlay')
 const introOverlay = $('#intro-overlay')
 const installBtn = $('#install-btn')
@@ -792,6 +796,17 @@ function refreshAnalyticsIfOpen() {
 }
 fileOnlyToggle.addEventListener('change', () => { if (!analyticsOverlay.hidden) renderAnalyticsView() })
 
+// ---- Library view ----
+function openLibrary() {
+  libraryOverlay.hidden = false
+  renderLibrary(libraryBody, { query: libSearch.value })
+}
+libSearch.addEventListener('input', () => { if (!libraryOverlay.hidden) renderLibrary(libraryBody, { query: libSearch.value }) })
+/** Re-render the library if it's open (e.g. after a scan). */
+function refreshLibraryIfOpen() {
+  if (!libraryOverlay.hidden) renderLibrary(libraryBody, { query: libSearch.value })
+}
+
 // ---- Settings ----
 function syncSettingsUI() {
   setFft.value = String(settings.fftSize)
@@ -860,6 +875,12 @@ document.addEventListener('click', (e) => {
       break
     case 'hide-scan':
       scanOverlay.hidden = true
+      break
+    case 'show-library':
+      openLibrary()
+      break
+    case 'hide-library':
+      libraryOverlay.hidden = true
       break
     case 'show-settings':
       settingsOverlay.hidden = false
@@ -1059,6 +1080,7 @@ async function runLibraryScan(files) {
   close.hidden = false
   await refreshHistory()
   refreshAnalyticsIfOpen()
+  refreshLibraryIfOpen()
 }
 
 seek.addEventListener('input', () => {
@@ -1067,7 +1089,7 @@ seek.addEventListener('input', () => {
 })
 
 // ---- Keyboard shortcuts ----
-const overlays = () => [settingsOverlay, analyticsOverlay, introOverlay, installHintOverlay, document.getElementById('detail-overlay')]
+const overlays = () => [settingsOverlay, analyticsOverlay, libraryOverlay, introOverlay, installHintOverlay, document.getElementById('detail-overlay')]
 const anyOverlayOpen = () => overlays().some((o) => o && !o.hidden)
 const closeOverlays = () => overlays().forEach((o) => { if (o) o.hidden = true })
 

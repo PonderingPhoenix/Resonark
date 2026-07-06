@@ -310,6 +310,20 @@ body { overflow: hidden; }
 .scan-bar { height: 8px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .scan-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.15s linear; }
 
+/* ---- Library view ---- */
+.lib-search { max-width: 260px; }
+.lib-summary { margin: 0 0 12px; }
+.lib-list { display: flex; flex-direction: column; gap: 6px; max-width: 760px; }
+.lib-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.lib-main { flex: 1; min-width: 0; }
+.lib-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-badges { display: flex; align-items: center; gap: 6px; flex: none; }
+.lib-fp.ok { color: #cfeee0; border-color: rgba(90, 209, 160, 0.4); }
+.lib-del { flex: none; background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 6px 9px; border-radius: 6px; }
+.lib-del:hover { color: var(--rec); background: rgba(255, 77, 94, 0.08); }
+@media (max-width: 520px) { .lib-badges .mood-chip { display: none; } }
+
 /* ---- Now-playing pill (overlaid, top-center of the stage) ---- */
 .now-bar {
   position: absolute; z-index: 6;

@@ -153,8 +153,9 @@
             <h2>History</h2>
             <div class="history-actions">
               <button class="btn tiny" data-action="show-analytics" title="Open vault analytics">📊 Analytics</button>
+              <button class="btn tiny ghost" data-action="show-library" title="Browse every song EchoVault knows">🎵 Library</button>
               <button class="btn tiny ghost" data-action="bulk-select-all" title="Select all shown for bulk actions">☑ Select</button>
-              <button class="btn tiny ghost" data-action="scan-library" title="Scan a music folder for tags + fingerprints so EchoVault can recognize those songs">🎵 Scan</button>
+              <button class="btn tiny ghost" data-action="scan-library" title="Scan a music folder for tags + fingerprints so EchoVault can recognize those songs">📂 Scan</button>
               <button class="btn tiny ghost" data-action="export-all" title="Export the whole vault as JSON">Export</button>
               <button class="btn tiny ghost" data-action="import-vault" title="Import a vault export (merges, skips duplicates)">Import</button>
               <input id="import-input" type="file" accept="application/json,.json" hidden />
@@ -290,6 +291,17 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <div id="library-overlay" class="analytics-overlay" hidden>
+        <div class="analytics-head">
+          <h2>🎵 Library</h2>
+          <div class="analytics-controls">
+            <input id="lib-search" class="history-search lib-search" type="search" placeholder="Search title or artist…" aria-label="Search library" />
+            <button class="btn tiny ghost" data-action="hide-library">Close ✕</button>
+          </div>
+        </div>
+        <div id="library-body" class="analytics-body"></div>
       </div>
 
       <div id="analytics-overlay" class="analytics-overlay" hidden>

@@ -73,6 +73,11 @@ export async function putReference(ref) {
   return reqProm(store(db, REFERENCES, 'readwrite').put(ref))
 }
 
+export async function deleteReference(trackKey) {
+  const db = await openDb()
+  return reqProm(store(db, REFERENCES, 'readwrite').delete(trackKey))
+}
+
 export async function listReferences() {
   const db = await openDb()
   return reqProm(store(db, REFERENCES, 'readonly').getAll())
