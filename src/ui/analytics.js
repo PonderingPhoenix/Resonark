@@ -56,6 +56,13 @@ function note(p, text) {
   p.append(n)
 }
 
+function sectionLabel(root, text) {
+  const h = document.createElement('h3')
+  h.className = 'an-section'
+  h.textContent = text
+  root.append(h)
+}
+
 let renderSeq = 0
 
 export async function renderAnalytics(root, opts = {}) {
@@ -85,6 +92,7 @@ export async function renderAnalytics(root, opts = {}) {
   const cpNote = digitalOnly ? 'digital only (no mic)' : 'all captures'
 
   // ===== Section A — Overview =====
+  sectionLabel(root, 'Overview')
   const kpis = A.listeningStats(sessions)
   const kpiRow = document.createElement('div')
   kpiRow.className = 'an-kpis'
@@ -109,6 +117,7 @@ export async function renderAnalytics(root, opts = {}) {
   gA.append(pHeat)
 
   // ===== Section B — Sound character (captured) =====
+  sectionLabel(root, 'Sound character')
   const gB = grid()
 
   const mt = A.moodTrend(sessions, { digitalOnly })
@@ -193,6 +202,7 @@ export async function renderAnalytics(root, opts = {}) {
   gB.append(pMood)
 
   // ===== Section C — Spectrum & gear signature =====
+  sectionLabel(root, 'Spectrum & gear')
   const gC = grid()
   const av = A.avgLibrarySpectrum(sessions, { digitalOnly })
   const pSpec = panel('Average library spectrum', `${av.n} captures · approx Hz`, 'span2')
@@ -216,6 +226,7 @@ export async function renderAnalytics(root, opts = {}) {
   gC.append(pColor)
 
   // ===== Section D — Leaderboards & identity =====
+  sectionLabel(root, 'Top tracks & artists')
   const gD = grid()
   const pTracks = panel('Top tracks', 'by plays')
   const tracksBody = document.createElement('div'); pTracks.append(tracksBody)

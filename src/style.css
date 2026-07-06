@@ -255,6 +255,16 @@ body { overflow: hidden; }
 .section-head h2 { margin: 0; }
 .head-actions { display: flex; align-items: center; gap: 4px; }
 
+/* ---- Panel nav (top toolbar): views left, utilities right ---- */
+.panel-nav { display: flex; align-items: center; gap: 6px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.panel-nav .nav-spacer { flex: 1; }
+.panel-nav .nav-btn { font-weight: 600; }
+.panel-nav .nav-btn:hover { border-color: var(--accent); color: #cfe4ff; }
+
+/* Settings "Your data" group */
+.set-data { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.set-data .row { gap: 8px; }
+
 /* Install affordance — only shown when the app is actually installable. */
 .install-btn {
   width: 100%; text-align: center;
@@ -291,9 +301,7 @@ body { overflow: hidden; }
    Select, Export, search, mood filter) so a first-time user isn't faced with a
    row of options for an empty list. Import stays available. */
 .history.empty .history-filter { display: none; }
-.history.empty [data-action="show-analytics"],
-.history.empty [data-action="bulk-select-all"],
-.history.empty [data-action="export-all"] { display: none; }
+.history.empty [data-action="bulk-select-all"] { display: none; }
 
 /* ---- "Sounds like…?" match suggestion ---- */
 .match-suggest {
@@ -451,6 +459,8 @@ kbd {
 .analytics-body { flex: 1; overflow-y: auto; padding: 18px 20px 40px; max-width: 1180px; width: 100%; margin: 0 auto; }
 .an-empty { padding: 40px 8px; text-align: center; }
 
+.an-section { margin: 22px 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.an-section:first-child { margin-top: 4px; }
 .an-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
 .kpi { background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
 .kpi-value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
