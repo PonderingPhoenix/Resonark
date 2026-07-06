@@ -110,6 +110,30 @@ export async function renderAnalytics(root, opts = {}) {
 
   // ===== Section B — Sound character (captured) =====
   const gB = grid()
+
+  const mt = A.moodTrend(sessions, { digitalOnly })
+  const pctDelta = (d, label) => d == null ? '' : `${d >= 0 ? '+' : '−'}${Math.abs(Math.round(d * 100))}% ${label}`
+  const mtSub = mt.buckets.length >= 2
+    ? [pctDelta(mt.deltaEnergy, 'energy'), pctDelta(mt.deltaPositivity, 'positivity')].filter(Boolean).join(' · ') + ` vs previous ${mt.unit}`
+    : `not enough history yet · ${cpNote}`
+  const pTaste = panel('Your taste over time', mtSub, 'span2')
+  if (!mt.buckets.length) note(pTaste, 'No captured audio yet — record or auto-capture to build a history.')
+  else {
+    addChart(pTaste, 140, (c, w, h) => {
+      const { min: xMin, max: xMax } = extentX(mt.buckets.map((b) => ({ x: b.t })))
+      timeSeries(c, w, h, {
+        series: [
+          { points: mt.buckets.map((b) => ({ x: b.t, y: b.energy })), color: SERIES.treble, width: 2, dots: true },
+          { points: mt.buckets.map((b) => ({ x: b.t, y: b.positivity })), color: SERIES.mid, width: 2, dots: true },
+        ],
+        yMin: 0, yMax: 1, xMin, xMax, yFmt: (v) => `${Math.round(v * 100)}%`,
+      })
+    })
+    legend(pTaste, [['energy', SERIES.treble], ['positivity', SERIES.mid]])
+    note(pTaste, 'Energy = louder & more dynamic; positivity = brighter & more treble-forward. A rough read of how upbeat your listening trends over time.')
+  }
+  gB.append(pTaste)
+
   const bt = A.brightnessTrend(sessions, { digitalOnly })
   const pBright = panel('Brightness', `${deltaText(bt.delta, 'Hz')} · ${cpNote}`)
   if (!bt.points.length) note(pBright, 'No captured audio yet.')

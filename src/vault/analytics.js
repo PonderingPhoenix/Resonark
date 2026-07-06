@@ -10,6 +10,7 @@
 // and identity distribution.
 
 import { slug, isStrongKey } from './trackKey.js'
+import { moodFromStats } from './mood.js'
 
 const BINS = 64
 const ACTIVE_FLOOR = 8 // byte magnitude below which a bin is treated as silent
@@ -145,6 +146,31 @@ export function loudnessTrend(sessions, opts = {}) {
       crest: (s.stats.peakLoudness || 0) - (s.stats.avgLoudness || 0),
     }))
   return { rows }
+}
+
+// ---- Taste over time: mean derived mood energy & positivity per time bucket ----
+export function moodTrend(sessions, opts = {}) {
+  const digitalOnly = !!opts.digitalOnly
+  const cap = sessions.filter(isCaptured).filter((s) => digitalPass(s, digitalOnly) && s.stats)
+  const unit = autoBucketUnit(cap)
+  const groups = new Map()
+  for (const s of cap) {
+    const m = moodFromStats(s.stats)
+    if (!m) continue
+    const key = bucketStart(s.startedAt, unit)
+    if (!groups.has(key)) groups.set(key, { t: key, e: 0, p: 0, n: 0 })
+    const g = groups.get(key)
+    g.e += m.energy; g.p += m.positivity; g.n++
+  }
+  const buckets = [...groups.values()].sort((a, b) => a.t - b.t)
+    .map((g) => ({ t: g.t, energy: g.e / g.n, positivity: g.p / g.n, n: g.n }))
+  const last = buckets[buckets.length - 1], prev = buckets[buckets.length - 2]
+  return {
+    unit,
+    buckets,
+    deltaEnergy: prev ? last.energy - prev.energy : null,
+    deltaPositivity: prev ? last.positivity - prev.positivity : null,
+  }
 }
 
 // ---- Tonal balance: mean of per-session normalized bass/mid/treble shares ----
