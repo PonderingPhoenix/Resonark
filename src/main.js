@@ -3,8 +3,9 @@ import { AudioEngine } from './audio/AudioEngine.js'
 import { computeFeatures } from './audio/features.js'
 import { makeBands, downsample } from './vault/fingerprint.js'
 import { Recorder } from './vault/Recorder.js'
-import { saveSession, upsertReferenceFromSession, bulkImport, deleteSession } from './vault/store.js'
-import { trackKeyOf } from './vault/trackKey.js'
+import { saveSession, upsertReferenceFromSession, bulkImport, deleteSession, listSessions, listReferences, updateSession } from './vault/store.js'
+import { trackKeyOf, isStrongKey } from './vault/trackKey.js'
+import { bestMatch } from './vault/match.js'
 import { visualizers, getVisualizer, READOUT_MODES } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
 import { renderAnalytics } from './ui/analytics.js'
@@ -156,6 +157,9 @@ function updateModeDesc() {
   if (modeDesc) modeDesc.innerHTML = `<b>${activeViz.label}</b> — ${activeViz.desc || ''}`
 }
 
+// A pending "sounds like…" suggestion for a just-recorded, unlabeled capture.
+let pendingMatch = null
+
 // Re-render History honoring the active search + mood filter. Every code path
 // that changes the vault goes through this so the filter is never lost.
 function refreshHistory() {
@@ -164,7 +168,68 @@ function refreshHistory() {
     mood: historyMood.value,
     selection: vaultSelection,
     onSelectChange: updateBulkBar,
+    suggestion: pendingMatch,
+    onApplySuggestion: applySuggestion,
+    onDismissSuggestion: dismissSuggestion,
   })
+}
+
+// After an UNLABELED capture, see if it sounds like a song we've already
+// labeled — if so, offer to apply that label (never auto-apply).
+async function maybeSuggestMatch(session) {
+  const hasTitle = (session.label?.title || '').trim().length > 0
+  if (hasTitle || isStrongKey(session.trackKey)) return // we already know what this is
+  if (!(session.spectrogramDims?.cols > 0)) return
+
+  const [sessions, references] = await Promise.all([listSessions(), listReferences()])
+  const candidates = []
+  // Clean, track-keyed references are the best label sources…
+  for (const r of references) {
+    if (!r.spectrogram || !(r.spectrogramDims?.cols > 0)) continue
+    if (!(r.title || '').trim()) continue
+    candidates.push({ title: r.title, artist: r.artist, trackKey: r.trackKey, spotify: r.spotify, spectrogram: r.spectrogram, spectrogramDims: r.spectrogramDims })
+  }
+  // …and any previously-labeled capture (covers the no-Spotify, name-only user).
+  for (const s of sessions) {
+    if (s.id === session.id || s.kind !== 'captured') continue
+    if (!(s.label?.title || '').trim()) continue
+    if (!(s.spectrogramDims?.cols > 0)) continue
+    candidates.push({ title: s.label.title, artist: s.label.artist, trackKey: s.trackKey, spotify: s.label.spotify, spectrogram: s.spectrogram, spectrogramDims: s.spectrogramDims })
+  }
+  if (!candidates.length) return
+
+  const m = bestMatch(session, candidates)
+  if (!m) return
+  pendingMatch = {
+    sessionId: session.id,
+    title: m.candidate.title || '',
+    artist: m.candidate.artist || '',
+    trackKey: m.candidate.trackKey || null,
+    spotify: m.candidate.spotify || null,
+    score: m.score,
+  }
+  await refreshHistory()
+}
+
+async function applySuggestion() {
+  const pm = pendingMatch
+  pendingMatch = null
+  if (!pm) return
+  const sessions = await listSessions()
+  const s = sessions.find((x) => x.id === pm.sessionId)
+  if (s) {
+    s.label = { ...s.label, title: pm.title, artist: pm.artist, ...(pm.spotify ? { spotify: pm.spotify } : {}) }
+    if (pm.trackKey) s.trackKey = pm.trackKey
+    await updateSession(s)
+    await upsertReferenceFromSession(s) // no-op unless the capture is reference-eligible (file/system)
+    refreshAnalyticsIfOpen()
+  }
+  await refreshHistory()
+}
+
+function dismissSuggestion() {
+  pendingMatch = null
+  refreshHistory()
 }
 
 function updateBulkBar() {
@@ -625,6 +690,7 @@ async function stopRecording() {
     await upsertReferenceFromSession(session)
     await refreshHistory()
     refreshAnalyticsIfOpen()
+    await maybeSuggestMatch(session) // "sounds like…?" if it went in unlabeled
   }
   // Reset label fields so they don't carry over to the next recording.
   npTitle.value = ''
