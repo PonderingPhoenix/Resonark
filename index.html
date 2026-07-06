@@ -152,7 +152,10 @@
         <section class="history empty" id="history-section">
           <div class="history-head">
             <h2>History</h2>
-            <button class="btn tiny ghost" data-action="bulk-select-all" title="Select recordings for bulk delete">☑ Select</button>
+            <div class="history-head-actions">
+              <button class="btn tiny ghost" data-action="rescan-history" title="Re-check unlabeled recordings against your library and fill in the songs it recognizes">↻ Rescan</button>
+              <button class="btn tiny ghost" data-action="bulk-select-all" title="Select recordings for bulk delete">☑ Select</button>
+            </div>
           </div>
           <input id="import-input" type="file" accept="application/json,.json" hidden />
           <input id="scan-input" type="file" accept="audio/*" multiple webkitdirectory hidden />

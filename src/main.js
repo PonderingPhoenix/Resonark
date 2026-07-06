@@ -8,6 +8,7 @@ import { trackKeyOf, isStrongKey } from './vault/trackKey.js'
 import { bestMatch } from './vault/match.js'
 import { readTags } from './audio/tags.js'
 import { scanLibrary } from './vault/libraryScan.js'
+import { buildLabelCandidates, findBackfillMatches, applyBackfill } from './vault/backfill.js'
 import { visualizers, getVisualizer, READOUT_MODES } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
 import { renderAnalytics } from './ui/analytics.js'
@@ -192,20 +193,7 @@ async function maybeSuggestMatch(session) {
   if (!(session.spectrogramDims?.cols > 0)) return
 
   const [sessions, references] = await Promise.all([listSessions(), listReferences()])
-  const candidates = []
-  // Clean, track-keyed references are the best label sources…
-  for (const r of references) {
-    if (!r.spectrogram || !(r.spectrogramDims?.cols > 0)) continue
-    if (!(r.title || '').trim()) continue
-    candidates.push({ title: r.title, artist: r.artist, trackKey: r.trackKey, spotify: r.spotify, spectrogram: r.spectrogram, spectrogramDims: r.spectrogramDims })
-  }
-  // …and any previously-labeled capture (covers the no-Spotify, name-only user).
-  for (const s of sessions) {
-    if (s.id === session.id || s.kind !== 'captured') continue
-    if (!(s.label?.title || '').trim()) continue
-    if (!(s.spectrogramDims?.cols > 0)) continue
-    candidates.push({ title: s.label.title, artist: s.label.artist, trackKey: s.trackKey, spotify: s.label.spotify, spectrogram: s.spectrogram, spectrogramDims: s.spectrogramDims })
-  }
+  const candidates = buildLabelCandidates(sessions, references, session.id)
   if (!candidates.length) return
 
   const m = bestMatch(session, candidates)
@@ -240,6 +228,41 @@ async function applySuggestion() {
 function dismissSuggestion() {
   pendingMatch = null
   refreshHistory()
+}
+
+/**
+ * Retro-match every unlabeled capture against the current library and offer to
+ * fill in the names in one batch. Recognition otherwise only runs at capture
+ * time, so this catches up old recordings after you scan music or load the
+ * starter pack. With { auto } it stays silent when there's nothing to offer
+ * (used to gently follow a scan/import); manually it always reports back.
+ * @returns {Promise<number>} how many recordings were labeled
+ */
+async function rescanHistory({ auto = false } = {}) {
+  const { eligible, proposals } = await findBackfillMatches()
+  if (!proposals.length) {
+    if (!auto) {
+      alert(eligible
+        ? `Checked ${eligible} unlabeled recording${eligible === 1 ? '' : 's'} against your library — no confident matches yet. Add more songs (📂 Scan or ✨ Starter) and try again.`
+        : 'No unlabeled recordings to match — everything with a fingerprint already has a name.')
+    }
+    return 0
+  }
+  const preview = proposals.slice(0, 4).map((p) => {
+    const c = p.candidate
+    return `• “${c.title}${c.artist ? ' — ' + c.artist : ''}”  (${Math.round(p.score * 100)}%)`
+  }).join('\n')
+  const more = proposals.length > 4 ? `\n…and ${proposals.length - 4} more` : ''
+  const ok = confirm(
+    `Found ${proposals.length} unlabeled recording${proposals.length === 1 ? '' : 's'} that match songs in your library:\n\n${preview}${more}\n\nLabel them from these matches?`,
+  )
+  if (!ok) return 0
+  const filled = await applyBackfill(proposals)
+  await refreshHistory()
+  refreshAnalyticsIfOpen()
+  refreshLibraryIfOpen()
+  if (!auto) alert(`Labeled ${filled} recording${filled === 1 ? '' : 's'} from your library.`)
+  return filled
 }
 
 function updateBulkBar() {
@@ -832,6 +855,8 @@ async function loadStarterLibrary() {
       `Added ${result.references} song${result.references === 1 ? '' : 's'} from the starter library` +
       (already > 0 ? ` (${already} already in your library).` : '.'),
     )
+    // A bigger library may now recognize old unlabeled captures — offer to fill them.
+    if (result.references > 0) await rescanHistory({ auto: true })
   } catch {
     alert('Couldn’t load the starter library — check your connection and try again.')
   }
@@ -973,6 +998,9 @@ document.addEventListener('click', (e) => {
       btn.textContent = show ? 'Customize ▴' : 'Customize ▾'
       break
     }
+    case 'rescan-history':
+      rescanHistory()
+      break
     case 'bulk-select-all':
       selectShown()
       break
@@ -1127,6 +1155,8 @@ async function runLibraryScan(files) {
   await refreshHistory()
   refreshAnalyticsIfOpen()
   refreshLibraryIfOpen()
+  // Newly fingerprinted songs may recognize old unlabeled captures — offer to fill them.
+  if (res.fingerprinted > 0) await rescanHistory({ auto: true })
 }
 
 seek.addEventListener('input', () => {
