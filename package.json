@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^6.2.1",
-    "@capacitor/core": "^6.2.1"
+    "@capacitor/core": "^6.2.1",
+    "music-metadata": "^11.13.0"
   }
 }
