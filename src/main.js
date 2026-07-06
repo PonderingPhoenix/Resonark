@@ -6,6 +6,7 @@ import { Recorder } from './vault/Recorder.js'
 import { saveSession, upsertReferenceFromSession, bulkImport, deleteSession, listSessions, listReferences, updateSession } from './vault/store.js'
 import { trackKeyOf, isStrongKey } from './vault/trackKey.js'
 import { bestMatch } from './vault/match.js'
+import { readTags } from './audio/tags.js'
 import { visualizers, getVisualizer, READOUT_MODES } from './visualizers/index.js'
 import { renderHistory, exportAll } from './ui/history.js'
 import { renderAnalytics } from './ui/analytics.js'
@@ -44,6 +45,7 @@ let lastAutoTs = 0
 let currentTrack = null      // last-seen currently-playing track (from polling)
 let pendingLabelTrack = null // a track the user clicked in "Recently played"
 let recordingTrack = null    // track snapshot captured when a recording started
+let fileLabel = null         // title/artist read from the loaded file's own tags
 let pollTimer = null
 
 // ---- DOM refs ----
@@ -479,6 +481,7 @@ function setLive(active, label = '') {
 
 // ---- Source handling ----
 async function startFile(file) {
+  fileLabel = null
   const el = await engine.useFile(file)
   vizEdges = null
   hint.hidden = true
@@ -492,11 +495,31 @@ async function startFile(file) {
     playBtn.textContent = '▶'
     if (recorder.recording) stopRecording()
   })
+  applyFileTags(file) // read embedded title/artist in the background
+}
+
+// If the file carries its own metadata (ID3 / iTunes atoms / Vorbis comments),
+// surface it and use it to auto-label captures — no Spotify needed.
+async function applyFileTags(file) {
+  const { title, artist } = await readTags(file)
+  if (!title && !artist) return
+  fileLabel = { title, artist }
+  npTitle.value = title
+  npArtist.value = artist
+  const np = $('#now-playing')
+  if (np.hidden) {
+    np.hidden = false
+    const btn = $('#label-toggle')
+    btn.setAttribute('aria-expanded', 'true')
+    btn.textContent = '－ Hide label'
+  }
+  setLive(true, artist ? `${title} — ${artist}` : title)
 }
 
 async function startMic() {
   try {
     await engine.useMicrophone()
+    fileLabel = null
     vizEdges = null
     hint.hidden = true
     readouts.hidden = false
@@ -511,6 +534,7 @@ async function startMic() {
 async function startSystem() {
   try {
     await engine.useSystemAudio()
+    fileLabel = null
     vizEdges = null
     hint.hidden = true
     readouts.hidden = false
@@ -678,8 +702,9 @@ async function stopRecording() {
   const manualTitle = npTitle.value.trim()
   const manualArtist = npArtist.value.trim()
   const session = recorder.finish({
-    title: manualTitle || (t ? t.title : ''),
-    artist: manualArtist || (t ? t.artist : ''),
+    // Priority: what you typed → the paired Spotify track → the file's own tags.
+    title: manualTitle || (t ? t.title : '') || (fileLabel?.title || ''),
+    artist: manualArtist || (t ? t.artist : '') || (fileLabel?.artist || ''),
     spotify: t ? { id: t.id, uri: t.uri, album: t.album, image: t.image, isrc: t.isrc } : undefined,
   })
   recordingTrack = null
