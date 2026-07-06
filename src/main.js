@@ -97,6 +97,7 @@ const analyticsBody = $('#analytics-body')
 const fileOnlyToggle = $('#an-file-only')
 const importInput = $('#import-input')
 const scanInput = $('#scan-input')
+const scanFilesInput = $('#scan-files-input')
 const scanOverlay = $('#scan-overlay')
 const libraryOverlay = $('#library-overlay')
 const libraryBody = $('#library-body')
@@ -871,7 +872,13 @@ document.addEventListener('click', (e) => {
       importInput.click()
       break
     case 'scan-library':
+      openScan()
+      break
+    case 'pick-scan-folder':
       scanInput.click()
+      break
+    case 'pick-scan-files':
+      scanFilesInput.click()
       break
     case 'hide-scan':
       scanOverlay.hidden = true
@@ -1039,21 +1046,29 @@ importInput.addEventListener('change', (e) => {
   importInput.value = '' // allow re-importing the same file
 })
 
-scanInput.addEventListener('change', (e) => {
+function openScan() {
+  scanOverlay.hidden = false
+  $('#scan-choose').hidden = false
+  $('#scan-progress').hidden = true
+}
+
+const onScanPick = (e) => {
   const files = e.target.files
   if (files && files.length) runLibraryScan(files)
-  scanInput.value = '' // allow re-scanning the same folder
-})
+  e.target.value = '' // allow re-scanning the same selection
+}
+scanInput.addEventListener('change', onScanPick)
+scanFilesInput.addEventListener('change', onScanPick)
 
 async function runLibraryScan(files) {
   const status = $('#scan-status')
   const fill = $('#scan-bar-fill')
   const detail = $('#scan-detail')
   const done = $('#scan-done')
-  const close = $('#scan-close')
   scanOverlay.hidden = false
+  $('#scan-choose').hidden = true
+  $('#scan-progress').hidden = false
   done.hidden = true
-  close.hidden = true
   status.textContent = 'Scanning your library…'
   fill.style.width = '0%'
   detail.textContent = ''
@@ -1077,7 +1092,6 @@ async function runLibraryScan(files) {
     ? `${res.fingerprinted} fingerprinted for sound-matching · ${res.skipped} skipped (no title/artist tags)` + (res.failed ? ` · ${res.failed} errored` : '')
     : ''
   done.hidden = false
-  close.hidden = false
   await refreshHistory()
   refreshAnalyticsIfOpen()
   refreshLibraryIfOpen()
@@ -1089,7 +1103,7 @@ seek.addEventListener('input', () => {
 })
 
 // ---- Keyboard shortcuts ----
-const overlays = () => [settingsOverlay, analyticsOverlay, libraryOverlay, introOverlay, installHintOverlay, document.getElementById('detail-overlay')]
+const overlays = () => [settingsOverlay, analyticsOverlay, libraryOverlay, scanOverlay, introOverlay, installHintOverlay, document.getElementById('detail-overlay')]
 const anyOverlayOpen = () => overlays().some((o) => o && !o.hidden)
 const closeOverlays = () => overlays().forEach((o) => { if (o) o.hidden = true })
 

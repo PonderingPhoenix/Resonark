@@ -160,6 +160,7 @@
               <button class="btn tiny ghost" data-action="import-vault" title="Import a vault export (merges, skips duplicates)">Import</button>
               <input id="import-input" type="file" accept="application/json,.json" hidden />
               <input id="scan-input" type="file" accept="audio/*" multiple webkitdirectory hidden />
+              <input id="scan-files-input" type="file" accept="audio/*" multiple hidden />
             </div>
           </div>
           <div class="history-filter">
@@ -230,15 +231,24 @@
         <div class="modal">
           <div class="modal-head">
             <h2>🎵 Scan library</h2>
-            <button class="btn tiny ghost" data-action="hide-scan" id="scan-close" hidden>✕</button>
+            <button class="btn tiny ghost" data-action="hide-scan" id="scan-close">✕</button>
           </div>
           <div class="modal-body">
-            <p id="scan-status" class="scan-status">Reading your files…</p>
-            <div class="scan-bar"><i id="scan-bar-fill"></i></div>
-            <p id="scan-detail" class="muted small"></p>
-            <p class="muted small">Reads each file's tags and, where your browser can decode it, a sound fingerprint — so EchoVault recognizes these songs later. Everything stays on your device.</p>
-            <div class="modal-actions">
-              <button class="btn primary" data-action="hide-scan" id="scan-done" hidden>Done</button>
+            <div id="scan-choose">
+              <p class="muted small">Add your music so EchoVault can recognize it. It reads each file's tags and, where your browser can decode it, a sound fingerprint. Everything stays on your device.</p>
+              <div class="scan-choices">
+                <button class="btn" data-action="pick-scan-folder">📁 Scan a folder</button>
+                <button class="btn" data-action="pick-scan-files">🎵 Choose files</button>
+              </div>
+              <p class="muted small">On a phone, use “Choose files” — folder scanning is desktop-only.</p>
+            </div>
+            <div id="scan-progress" hidden>
+              <p id="scan-status" class="scan-status">Reading your files…</p>
+              <div class="scan-bar"><i id="scan-bar-fill"></i></div>
+              <p id="scan-detail" class="muted small"></p>
+              <div class="modal-actions">
+                <button class="btn primary" data-action="hide-scan" id="scan-done" hidden>Done</button>
+              </div>
             </div>
           </div>
         </div>
