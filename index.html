@@ -2,6 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Local-first app: lock everything to same-origin. The only third party is
+         Spotify (opt-in), reached over connect-src for OAuth/API and img-src for
+         album art. object/base are denied; media/worker allow the app's own
+         blob URLs and service worker. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://i.scdn.co; media-src 'self' blob:; connect-src 'self' https://accounts.spotify.com https://api.spotify.com; worker-src 'self'; manifest-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#05060a" />
     <title>EchoVault · music visualizer & spectral vault</title>
@@ -294,6 +299,7 @@
                 <button class="btn tiny ghost" data-action="import-vault">⬆ Import vault</button>
               </div>
               <p class="muted small">A JSON backup of your recordings + library. Import merges and skips duplicates.</p>
+              <p id="storage-stat" class="muted small"></p>
             </div>
             <div class="kbd-help">
               <div class="detail-chart-label">Keyboard</div>

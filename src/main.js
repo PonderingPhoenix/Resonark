@@ -13,6 +13,7 @@ import { visualizers, getVisualizer, READOUT_MODES } from './visualizers/index.j
 import { renderHistory, exportAll } from './ui/history.js'
 import { renderAnalytics } from './ui/analytics.js'
 import { renderLibrary } from './ui/library.js'
+import { toast } from './ui/toast.js'
 import { SpotifyClient } from './integrations/spotify.js'
 import { loadSettings, saveSettings, DEFAULT_SETTINGS } from './settings.js'
 import { PALETTES } from './utils/colors.js'
@@ -707,13 +708,17 @@ async function logReferencePlay(track) {
     label: { title: track.title, artist: track.artist, source: 'spotify', spotify },
     spectrogramDims: { bins: 0, cols: 0 },
   }
-  await saveSession(session)
-  await refreshHistory()
-  refreshAnalyticsIfOpen()
+  try {
+    await saveSession(session)
+    await refreshHistory()
+    refreshAnalyticsIfOpen()
+  } catch (err) {
+    reportSaveError(err, 'play')
+  }
 }
 
 function escapeHtml(s) {
-  return (s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+  return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 }
 
 function formatAgo(iso) {
@@ -724,6 +729,18 @@ function formatAgo(iso) {
   const hrs = Math.round(mins / 60)
   if (hrs < 24) return `${hrs}h ago`
   return `${Math.round(hrs / 24)}d ago`
+}
+
+// Surface a failed vault write instead of losing it to an unhandled rejection.
+// A full disk / evicted quota is the likely cause, so name it.
+function reportSaveError(err, what) {
+  const quota = err && (err.name === 'QuotaExceededError' || /quota/i.test(err.message || ''))
+  toast(
+    quota
+      ? `Couldn’t save this ${what} — storage is full. Export your vault and remove some recordings to free space.`
+      : `Couldn’t save this ${what}. ${err?.message || 'Please try again.'}`,
+    { type: 'error', timeout: 8000 },
+  )
 }
 
 // ---- Recording ----
@@ -744,13 +761,21 @@ async function stopRecording() {
   })
   recordingTrack = null
   if (session.spectrogramDims.cols > 0) {
-    const id = await saveSession(session)
-    session.id = id
-    // A clean (file) capture of an identifiable track seeds the reference library.
-    await upsertReferenceFromSession(session)
-    await refreshHistory()
-    refreshAnalyticsIfOpen()
-    await maybeSuggestMatch(session) // "sounds like…?" if it went in unlabeled
+    try {
+      const id = await saveSession(session)
+      session.id = id
+      // A clean (file) capture of an identifiable track seeds the reference library.
+      await upsertReferenceFromSession(session)
+      await refreshHistory()
+      refreshAnalyticsIfOpen()
+      await maybeSuggestMatch(session) // "sounds like…?" if it went in unlabeled
+    } catch (err) {
+      reportSaveError(err, 'recording')
+    }
+  } else if (!settings.autoCapture) {
+    // Manual Record produced nothing (e.g. hit on silence) — say so rather than
+    // vanish silently. Auto-capture stays quiet; it drops empty segments by design.
+    toast('Nothing was captured — no sound came through.', { type: 'info' })
   }
   // Reset label fields so they don't carry over to the next recording.
   npTitle.value = ''
@@ -952,6 +977,7 @@ document.addEventListener('click', (e) => {
       break
     case 'show-settings':
       settingsOverlay.hidden = false
+      refreshStorageStat()
       break
     case 'hide-settings':
       settingsOverlay.hidden = true
@@ -1225,6 +1251,65 @@ applyOverlay()
 updateModeDesc()
 refreshHistory()
 requestAnimationFrame(loop)
+
+// ---- Reliability: surface failures instead of dying silently ----
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled promise rejection:', e.reason)
+  toast('Something went wrong. If it keeps happening, export your vault as a backup.', { type: 'error' })
+})
+window.addEventListener('error', (e) => {
+  if (e.message) console.error('Uncaught error:', e.message)
+})
+
+// ---- Durability: ask the browser not to evict the vault, and show usage ----
+async function initStorage() {
+  try {
+    if (navigator.storage?.persist && !(await navigator.storage.persisted?.())) {
+      await navigator.storage.persist() // best-effort; browsers may grant silently
+    }
+    await refreshStorageStat()
+  } catch { /* Storage API unavailable — nothing to do */ }
+}
+async function refreshStorageStat() {
+  const el = document.getElementById('storage-stat')
+  if (!el || !navigator.storage?.estimate) return
+  try {
+    const { usage = 0, quota = 0 } = await navigator.storage.estimate()
+    const mb = (n) => (n / 1048576).toFixed(n < 10485760 ? 1 : 0)
+    el.textContent = quota
+      ? `Vault storage: ${mb(usage)} MB used of ~${mb(quota)} MB available.`
+      : ''
+  } catch { /* ignore */ }
+}
+initStorage()
+
+// ---- Starter pack: only offer it once it's actually been curated ----
+// (an empty pack would dead-end onboarding). Sets a flag CSS keys off of.
+async function checkStarterAvailable() {
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}starter-references.json`, { cache: 'no-cache' })
+    if (!res.ok) return
+    const data = await res.json()
+    const refs = (Array.isArray(data) ? data : data.references) || []
+    if (refs.length > 0) document.documentElement.setAttribute('data-starter', 'ready')
+  } catch { /* offline / missing — leave the affordance hidden */ }
+}
+checkStarterAvailable()
+
+// ---- Service worker + "update available" prompt (registered manually so the
+// inline-script injection doesn't fight our CSP) ----
+if (import.meta.env.PROD) {
+  import('virtual:pwa-register').then(({ registerSW }) => {
+    const updateSW = registerSW({
+      onNeedRefresh() {
+        toast('A new version of EchoVault is ready.', {
+          type: 'info', timeout: 0,
+          action: { label: 'Reload', onClick: () => updateSW(true) },
+        })
+      },
+    })
+  }).catch(() => { /* PWA disabled in this build */ })
+}
 
 // First visit: show the friendly "how it works" intro once. Marking it seen here
 // (rather than only on dismiss) means any way of closing it sticks.
