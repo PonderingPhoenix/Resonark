@@ -21,12 +21,32 @@ redirect URI; see below).
 A workflow is included at `.github/workflows/deploy.yml`. It runs the tests,
 builds, and publishes `dist/` on every push to `main`.
 
-1. Repo **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+1. Make the repo **public** (Settings → General → Danger Zone), then
+   **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 2. Push to `main`. The **Deploy** workflow builds and publishes.
-3. (Recommended) Add a **custom domain** under Settings → Pages so the app is
-   served at `https://yourdomain/` (root), which keeps the Spotify redirect URI
-   clean. A user/org Pages site (`username.github.io`) also serves at the root;
-   a *project* site serves under `/<repo>/` (works, but is a subpath).
+3. **Custom domain: `resonark.ca`.** `public/CNAME` already pins it; set the same
+   under Settings → Pages → Custom domain, then tick **Enforce HTTPS** (available
+   once the cert is issued, usually a few minutes after DNS resolves).
+
+### DNS for `resonark.ca` (at your registrar)
+
+Apex domain → GitHub Pages. Add:
+
+| Type | Host | Value |
+|---|---|---|
+| A | `@` | `185.199.108.153` |
+| A | `@` | `185.199.109.153` |
+| A | `@` | `185.199.110.153` |
+| A | `@` | `185.199.111.153` |
+| AAAA | `@` | `2606:50c0:8000::153` |
+| AAAA | `@` | `2606:50c0:8001::153` |
+| AAAA | `@` | `2606:50c0:8002::153` |
+| AAAA | `@` | `2606:50c0:8003::153` |
+| CNAME | `www` | `ponderingphoenix.github.io.` |
+
+(The `www` CNAME lets `www.resonark.ca` redirect to the apex.) DNS can take
+minutes to a few hours to propagate; GitHub then issues the TLS cert
+automatically.
 
 ## Option B — Netlify / Cloudflare Pages / Vercel
 
@@ -51,10 +71,9 @@ i.e. exactly the URL the app is served from. You must register that *exact* URL
 in the Spotify app settings, or "Connect Spotify" will fail.
 
 1. Create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
-2. Under **Redirect URIs**, add your deployed URL **including the trailing path**:
-   - Root domain: `https://yourdomain/`
-   - GitHub project subpath: `https://username.github.io/your-repo/`
-   - Add `http://localhost:5173/` too if you use the Spotify flow in dev.
+2. Under **Redirect URIs**, add the deployed URL **including the trailing slash**:
+   - Production: `https://resonark.ca/`
+   - Add `http://127.0.0.1:5173/` too if you use the Spotify flow in dev.
 3. Note the **Client ID** (no client secret — Resonark uses PKCE, a public
    client).
 
@@ -70,15 +89,10 @@ The Spotify flow is entirely optional; without it, file + microphone capture
 ## Social preview image
 
 `public/og-image.png` (1200×630) is referenced by the Open Graph / Twitter tags
-in `index.html`. Those tags use a **relative** path so they work on any host out
-of the box. For the most reliable link unfurls across Slack/Discord/iMessage/etc.,
-change `og:image` and `twitter:image` to the **absolute** production URL once you
-have a domain:
-
-```html
-<meta property="og:image" content="https://yourdomain/og-image.png" />
-<meta name="twitter:image" content="https://yourdomain/og-image.png" />
-```
+in `index.html`, using the absolute production URL
+(`https://resonark.ca/og-image.png`) so link unfurls work across
+Slack/Discord/iMessage/etc. If you ever move domains, update those two `<meta>`
+tags to match.
 
 ## iOS install durability
 
