@@ -20,6 +20,7 @@ const LS = {
   refresh: 'echovault.spotify.refresh',
   expires: 'echovault.spotify.expires',
   verifier: 'echovault.spotify.verifier',
+  state: 'echovault.spotify.state',
   autolabel: 'echovault.spotify.autolabel',
 }
 
@@ -84,12 +85,15 @@ export class SpotifyClient {
   async connect() {
     if (!this.clientId) throw new Error('Set a Spotify client ID first.')
     const verifier = randomString(48)
+    const state = randomString(16)
     localStorage.setItem(LS.verifier, verifier)
+    localStorage.setItem(LS.state, state)
     const params = new URLSearchParams({
       client_id: this.clientId,
       response_type: 'code',
       redirect_uri: this.redirectUri,
       scope: SCOPES,
+      state, // CSRF: bind the callback to this sign-in attempt
       code_challenge_method: 'S256',
       code_challenge: await pkceChallenge(verifier),
     })
@@ -110,6 +114,15 @@ export class SpotifyClient {
       throw new Error('Spotify authorization was denied.')
     }
     if (!code) return false
+
+    // CSRF: the callback's state must match the one we stored when starting.
+    const expectedState = localStorage.getItem(LS.state)
+    const gotState = url.searchParams.get('state')
+    localStorage.removeItem(LS.state)
+    if (!expectedState || gotState !== expectedState) {
+      history.replaceState({}, '', this.redirectUri)
+      throw new Error('Spotify sign-in could not be verified (state mismatch — please try connecting again).')
+    }
 
     const verifier = localStorage.getItem(LS.verifier)
     if (!verifier) {

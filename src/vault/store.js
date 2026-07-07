@@ -22,8 +22,16 @@ function openDb() {
         db.createObjectStore(REFERENCES, { keyPath: 'trackKey' })
       }
     }
-    req.onsuccess = () => resolve(req.result)
+    req.onsuccess = () => {
+      const db = req.result
+      // If another tab opens a newer version, close this connection so its
+      // upgrade isn't blocked forever.
+      db.onversionchange = () => db.close()
+      resolve(db)
+    }
     req.onerror = () => reject(req.error)
+    // A pending upgrade is blocked by another open connection (e.g. a second tab).
+    req.onblocked = () => reject(new Error('Storage upgrade blocked — please close other EchoVault tabs and reload.'))
   })
 }
 
