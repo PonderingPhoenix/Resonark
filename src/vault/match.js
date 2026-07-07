@@ -44,6 +44,19 @@ export function similarity(a, b) {
   return { score: denom > 0 ? dot / denom : 0, active: idx.length }
 }
 
+// Score one target profile against candidates whose profiles are already
+// collapsed, so the expensive per-candidate collapse isn't repeated per target.
+function bestForProfile(tp, candProfiles, threshold) {
+  if (!tp) return null
+  let best = null, bestScore = -Infinity, bestActive = 0
+  for (const { candidate, profile } of candProfiles) {
+    if (!profile) continue
+    const { score, active } = similarity(tp, profile)
+    if (active >= MIN_ACTIVE && score > bestScore) { bestScore = score; best = candidate; bestActive = active }
+  }
+  return best && bestScore >= threshold ? { candidate: best, score: bestScore, active: bestActive } : null
+}
+
 /**
  * Find the best-matching candidate for a target capture.
  * @param {object} targetFp  the new capture (needs spectrogram + spectrogramDims)
@@ -52,15 +65,21 @@ export function similarity(a, b) {
  * @returns {{candidate:object, score:number, active:number}|null}
  */
 export function bestMatch(targetFp, candidates, { threshold = MATCH_THRESHOLD } = {}) {
-  const t = profileOf(targetFp)
-  if (!t) return null
-  let best = null, bestScore = -Infinity, bestActive = 0
-  for (const c of candidates) {
-    const p = profileOf(c)
-    if (!p) continue
-    const { score, active } = similarity(t, p)
-    if (active >= MIN_ACTIVE && score > bestScore) { bestScore = score; best = c; bestActive = active }
-  }
-  if (best && bestScore >= threshold) return { candidate: best, score: bestScore, active: bestActive }
-  return null
+  const candProfiles = candidates.map((candidate) => ({ candidate, profile: profileOf(candidate) }))
+  return bestForProfile(profileOf(targetFp), candProfiles, threshold)
+}
+
+/**
+ * Batch form of bestMatch: collapse each candidate's spectrogram ONCE and reuse
+ * the profiles across every target. bestMatch re-collapses candidates on each
+ * call — fine for a single live capture, but O(targets × candidates) collapses
+ * for a whole-history rescan, which this avoids.
+ * @param {Array} targets     captures to match (each needs spectrogram + dims)
+ * @param {Array} candidates  label sources (each needs spectrogram + dims)
+ * @param {{threshold?:number}} opts
+ * @returns {Array<{candidate:object, score:number, active:number}|null>} aligned to targets
+ */
+export function bestMatches(targets, candidates, { threshold = MATCH_THRESHOLD } = {}) {
+  const candProfiles = candidates.map((candidate) => ({ candidate, profile: profileOf(candidate) }))
+  return targets.map((t) => bestForProfile(profileOf(t), candProfiles, threshold))
 }
