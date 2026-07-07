@@ -16,6 +16,7 @@ import { renderLibrary } from './ui/library.js'
 import { toast } from './ui/toast.js'
 import { initModals } from './ui/modal.js'
 import { SpotifyClient } from './integrations/spotify.js'
+import { makeSpotifyViz } from './integrations/spotifyViz.js'
 import { loadSettings, saveSettings, DEFAULT_SETTINGS } from './settings.js'
 import { PALETTES } from './utils/colors.js'
 import { applyFocus, FOCUS_MODES } from './utils/focus.js'
@@ -63,6 +64,13 @@ let pendingLabelTrack = null // a track the user clicked in "Recently played"
 let recordingTrack = null    // track snapshot captured when a recording started
 let fileLabel = null         // title/artist read from the loaded file's own tags
 let pollTimer = null
+// Spotify "ambient" metadata visualization: when Spotify is playing but there's no
+// live audio to analyze, animate a per-track synthetic spectrum (see spotifyViz.js).
+let spotifyPlaying = false     // is Spotify currently playing something?
+let spotifyProgressMs = 0      // playback position reported at the last poll
+let spotifyProgressTs = 0      // performance.now() at that poll, to extrapolate between polls
+let spotifyWasAmbient = false  // were we drawing the metadata animation last frame?
+const spotifyViz = makeSpotifyViz()
 
 // ---- DOM refs ----
 const $ = (sel) => document.querySelector(sel)
@@ -134,7 +142,10 @@ const setSmooth = $('#set-smooth')
 const setMinDb = $('#set-mindb')
 const setMaxDb = $('#set-maxdb')
 const setAutolisten = $('#set-autolisten')
+const setSpotifyAmbient = $('#set-spotify-ambient')
 const idleHint = $('#idle-hint')
+const spotifyAmbientEl = $('#spotify-ambient')
+const spotifyAmbientTrack = $('#sa-track')
 
 // ---- Canvas sizing (device pixels for crisp rendering) ----
 function resize() {
@@ -500,9 +511,46 @@ function updateReadouts(f) {
 
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
+// When there's no live audio but Spotify is playing, animate a synthetic, per-track
+// spectrum from the metadata (see spotifyViz.js) and offer a one-tap way to capture
+// the real sound. Runs every frame from loop()'s not-ready branch.
+function drawSpotifyAmbient() {
+  const active = settings.spotifyAmbient && spotify.isConnected() && spotifyPlaying && !!currentTrack
+  if (!active) {
+    if (!spotifyAmbientEl.hidden) spotifyAmbientEl.hidden = true
+    if (spotifyWasAmbient) { hint.hidden = false; readouts.hidden = true; spotifyWasAmbient = false } // restore idle state
+    return
+  }
+  spotifyWasAmbient = true
+  hint.hidden = true
+  readouts.hidden = false
+  if (!canvas.width || !canvas.height) return
+
+  const now = performance.now()
+  // Extrapolate the playback position between 5s polls so the animation stays in sync.
+  const progressMs = spotifyProgressMs + (now - spotifyProgressTs)
+  const { bands, freq, time, features } = spotifyViz.frame(currentTrack, progressMs, now)
+  applyFocus(bands, settings.focus) // honor the bass/vocal/treble focus here too
+  const audio = { sampleRate: 44100, fftSize: 1024, minDb: engine.minDecibels ?? -100, maxDb: engine.maxDecibels ?? -30 }
+  activeViz.draw({ ctx, w: canvas.width, h: canvas.height, freq, time, bands, features, audio, viz: vizOpts, t: now })
+  updateReadouts(features)
+
+  const label = currentTrack.artist ? `${currentTrack.title} — ${currentTrack.artist}` : currentTrack.title
+  if (spotifyAmbientTrack.textContent !== label) spotifyAmbientTrack.textContent = label
+  if (spotifyAmbientEl.hidden) spotifyAmbientEl.hidden = false
+}
+
+// The nudge: capture the actual sound so the visualizer reflects the real audio.
+// Desktop → system/tab audio (clean, no mic); otherwise the microphone.
+function visualizeReal() {
+  const mobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || '')
+  if (!mobile && navigator.mediaDevices?.getDisplayMedia) startSystem()
+  else startMic()
+}
+
 function loop() {
   requestAnimationFrame(loop)
-  if (!engine.ready) return
+  if (!engine.ready) { drawSpotifyAmbient(); return }
   ensureEdges()
 
   const freq = engine.getFrequencyData()
@@ -619,6 +667,7 @@ function setLive(active, label = '') {
   sourceName.textContent = label
   sourceName.classList.toggle('live', !!active)
   idleHint.hidden = !!active
+  if (active) { spotifyAmbientEl.hidden = true; spotifyWasAmbient = false } // real audio supersedes the metadata animation
   if (!active) { nowBar.hidden = true; _lastNow = '' } // clear the pill when idle
 }
 
@@ -727,10 +776,14 @@ async function updateNowPlaying() {
     if (!spotify.isConnected()) return // disconnected while the request was in flight
     if (np && np.track) {
       currentTrack = np.track
+      spotifyPlaying = !!np.isPlaying
+      spotifyProgressMs = np.progressMs || 0
+      spotifyProgressTs = performance.now()
       npCurrent.textContent = `${np.track.title} — ${np.track.artist}${np.isPlaying ? '' : ' (paused)'}`
       npNow.classList.toggle('playing', np.isPlaying)
     } else {
       currentTrack = null
+      spotifyPlaying = false
       npCurrent.textContent = 'Nothing playing'
       npNow.classList.remove('playing')
     }
@@ -1005,6 +1058,7 @@ function syncSettingsUI() {
   setMinDb.value = String(settings.minDb)
   setMaxDb.value = String(settings.maxDb)
   setAutolisten.checked = settings.autoListen
+  if (setSpotifyAmbient) setSpotifyAmbient.checked = settings.spotifyAmbient
   $('#set-smooth-v').textContent = settings.smoothing.toFixed(2)
   $('#set-mindb-v').textContent = `${settings.minDb} dB`
   $('#set-maxdb-v').textContent = `${settings.maxDb} dB`
@@ -1017,6 +1071,7 @@ function applySettings() {
     minDb: Number(setMinDb.value),
     maxDb: Number(setMaxDb.value),
     autoListen: setAutolisten.checked,
+    spotifyAmbient: setSpotifyAmbient ? setSpotifyAmbient.checked : settings.spotifyAmbient,
   })
   Object.assign(settings, next)
   const fftChanged = engine.configure(settings)
@@ -1025,6 +1080,7 @@ function applySettings() {
 }
 ;[setFft, setSmooth, setMinDb, setMaxDb].forEach((el) => el.addEventListener('input', applySettings))
 setAutolisten.addEventListener('change', applySettings)
+if (setSpotifyAmbient) setSpotifyAmbient.addEventListener('change', applySettings)
 syncSettingsUI()
 
 // ---- Wire up actions ----
@@ -1040,6 +1096,9 @@ document.addEventListener('click', (e) => {
       break
     case 'use-system':
       startSystem()
+      break
+    case 'visualize-real':
+      visualizeReal()
       break
     case 'playpause':
       if (engine.mediaEl) {

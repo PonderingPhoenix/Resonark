@@ -8,11 +8,13 @@ export const FFT_SIZES = [1024, 2048, 4096, 8192]
 export const DEFAULT_SETTINGS = {
   fftSize: 2048, smoothing: 0.82, minDb: -100, maxDb: -30, autoListen: true,
   palette: DEFAULT_PALETTE, vizSize: 1, focus: DEFAULT_FOCUS, autoCapture: true,
+  spotifyAmbient: true,
 }
 
 export function sanitize(s = {}) {
   const autoListen = s.autoListen !== false // default on
   const autoCapture = s.autoCapture !== false // default on (the vault is the point); explicit off is respected
+  const spotifyAmbient = s.spotifyAmbient !== false // default on: animate from Spotify metadata when no live audio
   const fftSize = FFT_SIZES.includes(Number(s.fftSize)) ? Number(s.fftSize) : DEFAULT_SETTINGS.fftSize
 
   let smoothing = Number(s.smoothing)
@@ -35,7 +37,7 @@ export function sanitize(s = {}) {
   if (!Number.isFinite(vizSize)) vizSize = 1
   vizSize = Math.min(1.6, Math.max(0.6, vizSize))
 
-  return { fftSize, smoothing, minDb, maxDb, autoListen, palette, vizSize, focus, autoCapture }
+  return { fftSize, smoothing, minDb, maxDb, autoListen, palette, vizSize, focus, autoCapture, spotifyAmbient }
 }
 
 export function loadSettings() {
