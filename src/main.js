@@ -802,6 +802,7 @@ function stopSpotifyPolling() {
 }
 
 async function renderRecent() {
+  recentList.innerHTML = '<p class="muted small empty">Loading recent plays…</p>'
   const tracks = await spotify.getRecentlyPlayed(20)
   recentList.innerHTML = ''
   if (!tracks.length) {
@@ -814,9 +815,20 @@ async function renderRecent() {
 
     const main = document.createElement('button')
     main.className = 'recent-main-btn'
-    main.innerHTML = `<span class="recent-main">${escapeHtml(t.title)}</span>` +
-      `<span class="recent-sub">${escapeHtml(t.artist)} · ${formatAgo(t.playedAt)}</span>`
     main.title = 'Use this track to label your next recording'
+
+    // Album art (from Spotify's CDN, allowed by the CSP) makes each row a
+    // recognizable song; fall back to a note tile when a track has no artwork.
+    const art = document.createElement(t.image ? 'img' : 'span')
+    art.className = t.image ? 'recent-art' : 'recent-art recent-art-ph'
+    if (t.image) { art.src = t.image; art.alt = ''; art.loading = 'lazy'; art.decoding = 'async' }
+    else art.textContent = '♪'
+
+    const text = document.createElement('span')
+    text.className = 'recent-text'
+    text.innerHTML = `<span class="recent-main">${escapeHtml(t.title)}</span>` +
+      `<span class="recent-sub">${escapeHtml(t.artist)} · ${formatAgo(t.playedAt)}</span>`
+    main.append(art, text)
     main.addEventListener('click', () => {
       pendingLabelTrack = t
       npTitle.value = t.title
