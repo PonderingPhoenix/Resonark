@@ -78,7 +78,9 @@ export class SpotifyClient {
     localStorage.setItem(LS.clientId, this.clientId)
   }
 
-  get autoLabel() { return localStorage.getItem(LS.autolabel) === '1' }
+  // Default on: once connected, label captures from the now-playing track unless
+  // the user has explicitly turned it off ('0').
+  get autoLabel() { return localStorage.getItem(LS.autolabel) !== '0' }
   set autoLabel(on) { localStorage.setItem(LS.autolabel, on ? '1' : '0') }
 
   /** Begin the OAuth flow by redirecting to Spotify's consent screen. */

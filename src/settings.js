@@ -7,12 +7,12 @@ const KEY = 'echovault.settings'
 export const FFT_SIZES = [1024, 2048, 4096, 8192]
 export const DEFAULT_SETTINGS = {
   fftSize: 2048, smoothing: 0.82, minDb: -100, maxDb: -30, autoListen: true,
-  palette: DEFAULT_PALETTE, vizSize: 1, focus: DEFAULT_FOCUS, autoCapture: false,
+  palette: DEFAULT_PALETTE, vizSize: 1, focus: DEFAULT_FOCUS, autoCapture: true,
 }
 
 export function sanitize(s = {}) {
   const autoListen = s.autoListen !== false // default on
-  const autoCapture = s.autoCapture === true // default off
+  const autoCapture = s.autoCapture !== false // default on (the vault is the point); explicit off is respected
   const fftSize = FFT_SIZES.includes(Number(s.fftSize)) ? Number(s.fftSize) : DEFAULT_SETTINGS.fftSize
 
   let smoothing = Number(s.smoothing)
