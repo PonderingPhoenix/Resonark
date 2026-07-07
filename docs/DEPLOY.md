@@ -77,11 +77,26 @@ in the Spotify app settings, or "Connect Spotify" will fail.
 3. Note the **Client ID** (no client secret — Resonark uses PKCE, a public
    client).
 
-Today each user pastes their own Client ID in the app. For a public launch you
-likely want **one shared Spotify app**: register the production redirect URI,
-and pre-fill the Client ID (it's not a secret) instead of prompting. Heads-up:
-Spotify apps start in **development mode**, capped at ~25 listed users, until you
-request a quota extension — plan for that before a wide launch.
+### One-tap Connect (shared Client ID)
+
+To make "Connect Spotify" one tap (no per-user dev setup), bake in a single
+Client ID at build time. A Client ID is a **public** identifier — not a secret —
+so this is safe.
+
+1. In GitHub → **Settings → Secrets and variables → Actions → Variables → New
+   repository variable**: name `VITE_SPOTIFY_CLIENT_ID`, value = your app's
+   Client ID. (A Secret also works; the workflow reads either.)
+2. Push / re-run **Deploy**. The workflow passes it into the build, so the app
+   is pre-configured and users just click Connect.
+
+If the variable is unset (e.g. someone forks the repo), the app falls back to
+prompting each user for their own Client ID — so forks keep working without
+inheriting yours.
+
+**Heads-up on the 25-user cap.** Spotify apps start in **Development mode**,
+limited to ~25 accounts you add under **User Management**. To let anyone connect,
+request a **quota extension** in the dashboard. Until then, one-tap Connect works
+for you + up to 25 testers.
 
 The Spotify flow is entirely optional; without it, file + microphone capture
 (the core of the app) work with no setup.
