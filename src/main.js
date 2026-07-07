@@ -239,24 +239,28 @@ function dismissSuggestion() {
  * @returns {Promise<number>} how many recordings were labeled
  */
 async function rescanHistory({ auto = false } = {}) {
-  const { eligible, proposals } = await findBackfillMatches()
+  const { eligible, candidateCount, proposals } = await findBackfillMatches()
   if (!proposals.length) {
     if (!auto) {
-      alert(eligible
-        ? `Checked ${eligible} unlabeled recording${eligible === 1 ? '' : 's'} against your library — no confident matches yet. Add more songs (📂 Scan or ✨ Starter) and try again.`
-        : 'No unlabeled recordings to match — everything with a fingerprint already has a name.')
+      if (!eligible) alert('No unlabeled recordings to match right now.')
+      else if (!candidateCount) alert('There are no songs to match against yet — add some with 📂 Scan music or ✨ Starter, then try again.')
+      else alert(`Checked ${eligible} unlabeled recording${eligible === 1 ? '' : 's'} against your library — no confident matches yet.`)
     }
     return 0
   }
-  const preview = proposals.slice(0, 4).map((p) => {
+  const CAP = 12
+  const preview = proposals.slice(0, CAP).map((p) => {
     const c = p.candidate
     return `• “${c.title}${c.artist ? ' — ' + c.artist : ''}”  (${Math.round(p.score * 100)}%)`
   }).join('\n')
-  const more = proposals.length > 4 ? `\n…and ${proposals.length - 4} more` : ''
+  const more = proposals.length > CAP ? `\n…and ${proposals.length - CAP} more` : ''
   const ok = confirm(
-    `Found ${proposals.length} unlabeled recording${proposals.length === 1 ? '' : 's'} that match songs in your library:\n\n${preview}${more}\n\nLabel them from these matches?`,
+    `Found ${proposals.length} unlabeled recording${proposals.length === 1 ? '' : 's'} that match songs in your library:\n\n${preview}${more}\n\nLabel them from these matches? You can edit any label afterwards in History.`,
   )
   if (!ok) return 0
+  // If a backfilled capture still holds a pending live suggestion, drop it so the
+  // stale banner can't later overwrite the label we're about to apply.
+  if (pendingMatch && proposals.some((p) => p.session.id === pendingMatch.sessionId)) pendingMatch = null
   const filled = await applyBackfill(proposals)
   await refreshHistory()
   refreshAnalyticsIfOpen()
@@ -1155,8 +1159,10 @@ async function runLibraryScan(files) {
   await refreshHistory()
   refreshAnalyticsIfOpen()
   refreshLibraryIfOpen()
-  // Newly fingerprinted songs may recognize old unlabeled captures — offer to fill them.
-  if (res.fingerprinted > 0) await rescanHistory({ auto: true })
+  // Songs newly added to the library may recognize old unlabeled captures — offer
+  // to fill them. Gate on `added` (not `fingerprinted`, which counts re-scans of
+  // songs already present) so re-scanning an unchanged folder doesn't re-nag.
+  if (res.added > 0) await rescanHistory({ auto: true })
 }
 
 seek.addEventListener('input', () => {
