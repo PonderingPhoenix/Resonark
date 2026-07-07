@@ -586,6 +586,15 @@ input, textarea, .card-title, .card-artist { -webkit-user-select: text; user-sel
   }
 }
 
+/* ---- Detail modal: inline label editing ---- */
+.detail-edit { display: flex; flex-direction: column; gap: 8px; }
+.detail-input {
+  width: 100%; padding: 8px 10px; font-size: 14px;
+  background: var(--panel-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: 8px;
+}
+.detail-input:focus { outline: none; border-color: var(--accent); }
+
 /* ---- Starter pack: hidden until the pack has actually been curated ---- */
 [data-action="load-starter"] { display: none; }
 :root[data-starter="ready"] [data-action="load-starter"] { display: inline-block; }

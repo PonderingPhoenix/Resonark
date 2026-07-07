@@ -161,6 +161,62 @@ function selectMode(name) {
   updateModeDesc()
 }
 
+// Save the current visual frame as a PNG — the one way to get something visual
+// *out* of the visualizer. Stamps the now-playing label + brand at the bottom.
+function saveSnapshot() {
+  if (!engine.ready) { toast('Start a source first, then snapshot the visuals.', { type: 'info' }); return }
+  const tmp = document.createElement('canvas')
+  tmp.width = canvas.width
+  tmp.height = canvas.height
+  const c = tmp.getContext('2d')
+  c.drawImage(canvas, 0, 0)
+  stampSnapshot(c, tmp.width, tmp.height)
+  tmp.toBlob((blob) => {
+    if (!blob) { toast('Couldn’t create the image.', { type: 'error' }); return }
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    const title = (npTitle.value || currentTrack?.title || '').trim()
+    const tag = title ? '-' + title.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase().slice(0, 40) : ''
+    a.download = `echovault-${activeViz.name}${tag}.png`
+    a.href = url
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    toast('Snapshot saved.', { type: 'success' })
+  }, 'image/png')
+}
+
+function stampSnapshot(c, w, h) {
+  const pad = Math.round(w * 0.022)
+  const fs = Math.max(13, Math.round(w * 0.017))
+  const title = (npTitle.value || currentTrack?.title || '').trim()
+  const artist = (npArtist.value || currentTrack?.artist || '').trim()
+  c.save()
+  const band = fs * 4.5
+  const g = c.createLinearGradient(0, h - band, 0, h)
+  g.addColorStop(0, 'rgba(0,0,0,0)')
+  g.addColorStop(1, 'rgba(0,0,0,0.55)')
+  c.fillStyle = g
+  c.fillRect(0, h - band, w, band)
+  // Brand, bottom-right.
+  c.textAlign = 'right'
+  c.font = `600 ${fs}px system-ui, -apple-system, sans-serif`
+  c.fillStyle = 'rgba(255,255,255,0.82)'
+  c.fillText('🔊 EchoVault', w - pad, h - pad)
+  // Track, bottom-left.
+  if (title) {
+    c.textAlign = 'left'
+    c.font = `700 ${Math.round(fs * 1.25)}px system-ui, -apple-system, sans-serif`
+    c.fillStyle = '#fff'
+    c.fillText(title, pad, h - pad - (artist ? fs * 1.35 : 0))
+    if (artist) {
+      c.font = `400 ${fs}px system-ui, -apple-system, sans-serif`
+      c.fillStyle = 'rgba(255,255,255,0.78)'
+      c.fillText(artist, pad, h - pad)
+    }
+  }
+  c.restore()
+}
+
 // "Surprise me" — pick a look at random so you don't have to choose.
 function surpriseMode() {
   const others = visualizers.filter((v) => v.name !== activeViz.name)
@@ -1005,6 +1061,9 @@ document.addEventListener('click', (e) => {
       break
     case 'surprise':
       surpriseMode()
+      break
+    case 'snapshot':
+      saveSnapshot()
       break
     case 'toggle-looks': {
       const grid = $('#mode-buttons')
