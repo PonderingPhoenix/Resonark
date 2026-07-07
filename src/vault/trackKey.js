@@ -17,12 +17,32 @@ export function slug(s) {
     .replace(/[^a-z0-9]+/g, '')
 }
 
+// Normalized raw text (keeps non-Latin characters) for the hash fallback below.
+const norm = (s) => (s || '').normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim()
+
+// Deterministic 32-bit FNV-1a → base36. Used only to give non-Latin titles a
+// stable key; not security-sensitive.
+function hash(str) {
+  let h = 0x811c9dc5
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0).toString(36)
+}
+
 export function trackKeyOf(spotify, label) {
   if (spotify?.isrc) return `isrc:${spotify.isrc}`
   if (spotify?.id) return `spotify:${spotify.id}`
   const t = slug(label?.title)
   const a = slug(label?.artist)
   if (t && a) return `name:${t}|${a}`
+  // slug() strips CJK/Cyrillic/Greek/Arabic to nothing; rather than drop the
+  // track entirely, key off a hash of the normalized raw title+artist so
+  // non-Latin music still gets a stable identity and can be recognized.
+  const rawT = norm(label?.title)
+  const rawA = norm(label?.artist)
+  if (rawT && rawA) return `name:#${hash(`${rawT}|${rawA}`)}`
   return null
 }
 
