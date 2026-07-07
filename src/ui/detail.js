@@ -3,7 +3,7 @@ import { isStrongKey } from '../vault/trackKey.js'
 import { areaCurve, divergingCurve, prepCanvas } from './charts.js'
 import { heat } from '../utils/colors.js'
 import { moodFromStats } from '../vault/mood.js'
-import { deleteSession } from '../vault/store.js'
+import { deleteSession, updateSession } from '../vault/store.js'
 
 // A per-session drill-in modal: large spectrogram, full stats, average spectrum,
 // and — for a mic capture with a clean reference — the speaker/room coloration
@@ -85,6 +85,37 @@ export function openDetail(session, refMap, onChange) {
   meta.textContent = `${session.label?.artist || 'Unknown artist'} · ${fmtDate(session.startedAt)}` +
     (isRef ? ' · logged play (metadata only)' : ` · ${fmtDur(session.durationMs)} · ${session.capturePath || '—'} capture`)
   body.append(meta)
+
+  // Let a captured session's title/artist be corrected right here (logged plays
+  // are Spotify-sourced, so they stay read-only).
+  if (!isRef) {
+    const edit = document.createElement('div')
+    edit.className = 'detail-edit'
+    const mk = (val, ph, aria) => {
+      const i = document.createElement('input')
+      i.className = 'detail-input'
+      i.value = val || ''
+      i.placeholder = ph
+      i.setAttribute('aria-label', aria)
+      return i
+    }
+    const ti = mk(session.label?.title, 'Track title', 'Track title')
+    const ar = mk(session.label?.artist, 'Artist', 'Artist')
+    let t = null
+    const persist = () => {
+      clearTimeout(t)
+      t = setTimeout(async () => {
+        session.label = { ...session.label, title: ti.value.trim(), artist: ar.value.trim() }
+        await updateSession(session)
+        titleEl.textContent = session.label.title || 'Untitled session'
+        if (onChange) onChange()
+      }, 400)
+    }
+    ti.addEventListener('input', persist)
+    ar.addEventListener('input', persist)
+    edit.append(ti, ar)
+    body.append(edit)
+  }
 
   if (hasFp) {
     addChart(body, 160, (c, w, h) => drawBigSpectro(c, w, h, fp), isRef ? 'Inherited spectrogram' : 'Spectrogram')
