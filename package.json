@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "A music visualizer and media multi-analyzer that records a compact spectral history of what you listen to.",
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "dev": "vite",
     "dev:lan": "vite --host --mode lan",
