@@ -22,6 +22,7 @@ export const tunnel = {
     const loud = (features?.rms || 0) / 255
     const treble = (features?.treble || 0) / 255
     const bass = (features?.bass || 0) / 255
+    const pace = features?.pace || 1
     const cx = w / 2
     const cy = h / 2
     const maxR = Math.hypot(cx, cy)
@@ -29,9 +30,9 @@ export const tunnel = {
 
     const RINGS = 18
     const VERTS = 48
-    // Forward motion (kept bounded) — faster when the music is loud / on the beat.
-    this._phase = (this._phase + 0.010 + loud * 0.022 + beat * 0.05) % 1
-    this._spin = (this._spin + 0.003 + treble * 0.022) % (Math.PI * 2)
+    // Forward motion (kept bounded) — flies faster for faster songs, surging on the beat.
+    this._phase = (this._phase + (0.010 + loud * 0.022) * pace + beat * 0.05) % 1
+    this._spin = (this._spin + (0.003 + treble * 0.022) * pace) % (Math.PI * 2)
 
     ctx.globalCompositeOperation = 'lighter'
     ctx.lineJoin = 'round'

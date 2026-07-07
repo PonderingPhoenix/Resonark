@@ -42,6 +42,17 @@ const vizOpts = { palette: settings.palette, size: settings.vizSize }
 let bassAvg = 0
 let beat = 0
 
+// Tempo → pace: estimate the song's speed from the spacing between beat onsets and
+// turn it into one smooth animation-speed multiplier (~0.55..1.9, neutral at 1.0)
+// that every visualizer shares — so the whole scene rushes for fast songs and eases
+// for slow ones. When there's no clear beat (ambient / beatless material) it falls
+// back to a loudness-driven pace so the art still breathes with the music.
+let prevBeatEdge = 0        // last frame's beat value, to catch rising edges
+let lastOnsetTs = 0         // performance.now() of the most recent beat onset
+const onsetGaps = []        // recent inter-onset gaps in ms (bounded ring)
+let tempoBpm = 0            // smoothed tempo estimate (0 = unknown)
+let pace = 1               // smoothed animation-speed multiplier the visualizers read
+
 // Always-on auto-capture: a pure state machine + a timestamp for the frame delta.
 const autoState = createAutoState()
 let lastAutoTs = 0
@@ -506,6 +517,41 @@ function loop() {
   if (bassNow > bassAvg * 1.28 && bassNow > 22 && beat < 0.55) beat = 1
   beat = Math.max(0, beat - 0.06)
   features.beat = beat
+
+  // Tempo → pace. A beat's rising edge is an onset; the gaps between onsets give
+  // the tempo. Take the median gap (robust to the odd missed/extra beat), fold it
+  // into a musical octave (70..170 BPM), smooth it, and normalize around 120 BPM.
+  const nowTs = performance.now()
+  if (beat > 0.6 && prevBeatEdge <= 0.6) {
+    if (lastOnsetTs) {
+      const gap = nowTs - lastOnsetTs
+      if (gap > 200 && gap < 2000) { // 30..300 BPM: ignore double-triggers and long silences
+        onsetGaps.push(gap)
+        if (onsetGaps.length > 8) onsetGaps.shift()
+      }
+    }
+    lastOnsetTs = nowTs
+  }
+  prevBeatEdge = beat
+
+  const loudNow = features.rms / 255
+  const recentOnset = lastOnsetTs > 0 && nowTs - lastOnsetTs < 2500
+  let paceTarget
+  if (onsetGaps.length >= 3 && recentOnset) {
+    const sorted = [...onsetGaps].sort((a, b) => a - b)
+    let bpm = 60000 / sorted[sorted.length >> 1]
+    while (bpm < 70) bpm *= 2
+    while (bpm > 170) bpm /= 2
+    tempoBpm = tempoBpm ? tempoBpm + (bpm - tempoBpm) * 0.08 : bpm
+    paceTarget = tempoBpm / 120
+  } else {
+    if (!recentOnset) { tempoBpm = 0; onsetGaps.length = 0 } // beat stopped — forget stale tempo
+    paceTarget = 0.7 + loudNow * 0.8
+  }
+  paceTarget = Math.max(0.55, Math.min(1.9, paceTarget))
+  pace += (paceTarget - pace) * 0.04 // heavy smoothing keeps the whole scene jitter-free
+  features.tempo = tempoBpm
+  features.pace = pace
 
   // Always-on auto-capture: let the state machine decide when a song starts/ends.
   if (settings.autoCapture) {

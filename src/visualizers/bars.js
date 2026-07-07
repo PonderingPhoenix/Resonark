@@ -8,10 +8,13 @@ export const bars = {
   desc: 'A classic equalizer — bass on the left, treble on the right. Bars jump and glow on the beat.',
   _peaks: null,
 
-  draw({ ctx, w, h, bands, features, viz }) {
+  draw({ ctx, w, h, bands, features, viz, t }) {
     const beat = features?.beat || 0
+    const loud = (features?.rms || 0) / 255
+    const pace = features?.pace || 1
     const palette = viz?.palette
     const size = viz?.size || 1
+    const clock = (t || 0) * 0.005 * pace // shimmer clock that keeps time with the song
 
     const n = bands.length
     if (!this._peaks || this._peaks.length !== n) this._peaks = new Float32Array(n)
@@ -19,9 +22,10 @@ export const bars = {
 
     ctx.fillStyle = '#05060a'
     ctx.fillRect(0, 0, w, h)
-    if (beat > 0.04) {
+    // Floor glow that swells on the beat and rides the overall loudness.
+    if (beat > 0.04 || loud > 0.05) {
       const g = ctx.createRadialGradient(w / 2, h, 0, w / 2, h, h)
-      g.addColorStop(0, `hsla(${glowHue} 90% 62% / ${0.14 * beat})`)
+      g.addColorStop(0, `hsla(${glowHue} 90% 62% / ${0.14 * beat + 0.06 * loud})`)
       g.addColorStop(1, `hsla(${glowHue} 90% 62% / 0)`)
       ctx.fillStyle = g
       ctx.fillRect(0, 0, w, h)
@@ -35,7 +39,9 @@ export const bars = {
     for (let i = 0; i < n; i++) {
       let v = bands[i] / 255
       v = Math.pow(v, 0.82) // lift quiet detail
-      const bh = v * maxH * (1 + beat * 0.12)
+      // Beat punch + a faint travelling shimmer so the tops never sit dead still.
+      const shimmer = 1 + Math.sin(clock + i * 0.4) * 0.04 * (0.3 + loud)
+      const bh = v * maxH * (1 + beat * 0.18) * shimmer
       const x = i * bw + gap
       const bwid = bw - gap * 2
       const hue = bandHue(i, n, palette)
@@ -52,8 +58,8 @@ export const bars = {
       ctx.fillRect(x, baseY, bwid, Math.min(bh * 0.4, h - baseY))
       ctx.globalAlpha = 1
 
-      // falling peak-hold cap
-      this._peaks[i] = Math.max(v, this._peaks[i] - 0.010)
+      // falling peak-hold cap (falls in time with the song)
+      this._peaks[i] = Math.max(v, this._peaks[i] - 0.010 * pace)
       const py = baseY - this._peaks[i] * maxH
       ctx.fillStyle = `hsl(${hue} 100% 78%)`
       ctx.fillRect(x, py - 2, bwid, 2)

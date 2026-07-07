@@ -21,6 +21,7 @@ export const rings = {
     const maxR = Math.hypot(cx, cy)
     const beat = features?.beat || 0
     const loud = (features?.rms || 0) / 255
+    const pace = features?.pace || 1
     const n = bands.length
 
     // Spawn one ripple on the rising edge of a beat (not every frame it's high).
@@ -46,7 +47,7 @@ export const rings = {
 
     // Expanding beat ripples.
     for (const rip of this._ripples) {
-      rip.r += (3.5 + loud * 8) * size
+      rip.r += (3.5 + loud * 8) * size * pace
       rip.life -= 0.02
       ctx.strokeStyle = `hsl(${rip.hue} 95% 66% / ${Math.max(0, rip.life) * 0.6})`
       ctx.lineWidth = 3 * size * rip.life

@@ -15,13 +15,15 @@ export const oscilloscope = {
     const size = viz?.size || 1
     const n = time.length
     const mid = h / 2
-    const amp = h * 0.42 * (0.7 + size * 0.3)
     const loud = (features?.rms || 0) / 255
-    const hue = bandHue(loud * 10, 11, palette) // palette sweep, brighter when loud
+    const beat = features?.beat || 0
+    const bright = Math.min(1, (features?.centroid || 0) / 6000) // spectral centroid → 0..1
+    const amp = h * 0.42 * (0.7 + size * 0.3) * (1 + beat * 0.18) // waveform swells on the beat
+    const hue = bandHue(bright * 10, 11, palette) // colour shifts with brightness of the sound
 
-    ctx.lineWidth = Math.max(1.5, h * 0.004) * size
-    ctx.strokeStyle = `hsl(${hue} 90% 60%)`
-    ctx.shadowBlur = 16
+    ctx.lineWidth = Math.max(1.5, h * 0.004) * size * (1 + beat * 0.5)
+    ctx.strokeStyle = `hsl(${hue} 90% ${58 + loud * 14}%)`
+    ctx.shadowBlur = 12 + loud * 22 + beat * 12 // glow pulses with loudness and the beat
     ctx.shadowColor = `hsl(${hue} 95% 55%)`
 
     ctx.beginPath()

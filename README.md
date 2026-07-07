@@ -27,9 +27,9 @@ spectrum eye-candy into a personal "music DNA log."
 ## Visual modes
 
 Twelve looks, from pure measurement to eye-candy — **Bars · Particles · Bloom ·
-Aurora · Rings · Tunnel · Kaleidoscope · Plasma · Waterfall · Wave · Levels ·
-Meter (RTA)**. Switch anytime; each reacts to the beat and your chosen palette,
-and any frame can be saved as a PNG.
+Aurora · Rings · Tunnel · Kaleidoscope · Lava Lamp · Waterfall · Wave · Levels ·
+Meter (RTA)**. Switch anytime; each reacts to the beat, the song's tempo and your
+chosen palette, and any frame can be saved as a PNG.
 
 ![Resonark visual modes](docs/gallery.png)
 
