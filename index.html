@@ -17,10 +17,10 @@
       <button id="panel-toggle" class="panel-toggle" data-action="toggle-panel" aria-label="Open menu" aria-expanded="false">☰</button>
       <div id="panel-scrim" class="panel-scrim" data-action="collapse-panel" hidden></div>
       <main id="stage">
-        <canvas id="viz"></canvas>
+        <canvas id="viz" aria-hidden="true"></canvas>
 
-        <!-- Live readouts overlaid on the canvas -->
-        <div id="overlay" class="overlay">
+        <!-- Live readouts overlaid on the canvas (decorative) -->
+        <div id="overlay" class="overlay" aria-hidden="true">
           <div class="brand">
             <span class="brand-mark">🔊</span>
             <span class="brand-name">EchoVault</span>
@@ -59,8 +59,8 @@
           <button class="btn tiny nav-btn" data-action="show-analytics" title="Listening analytics">📊 Analytics</button>
           <button class="btn tiny nav-btn" data-action="show-library" title="Browse every song EchoVault knows">🎵 Library</button>
           <span class="nav-spacer"></span>
-          <button class="btn tiny ghost icon" data-action="show-intro" title="How EchoVault works">ⓘ</button>
-          <button class="btn tiny ghost icon" data-action="show-settings" title="Settings">⚙</button>
+          <button class="btn tiny ghost icon" data-action="show-intro" title="How EchoVault works" aria-label="How EchoVault works">ⓘ</button>
+          <button class="btn tiny ghost icon" data-action="show-settings" title="Settings" aria-label="Settings">⚙</button>
         </nav>
 
         <section class="source">
@@ -75,8 +75,8 @@
           </p>
           <input id="file-input" type="file" accept="audio/*" hidden />
           <div id="transport" class="transport" hidden>
-            <button class="btn icon" data-action="playpause" title="Play / pause">▶</button>
-            <input id="seek" class="seek" type="range" min="0" max="1000" value="0" />
+            <button id="playpause-btn" class="btn icon" data-action="playpause" title="Play / pause" aria-label="Play">▶</button>
+            <input id="seek" class="seek" type="range" min="0" max="1000" value="0" aria-label="Seek" />
             <span id="time" class="time">0:00</span>
           </div>
           <p id="source-name" class="muted small"></p>
@@ -130,14 +130,14 @@
             <div id="np-now" class="np" hidden>
               <span class="np-dot"></span>
               <span id="np-current" class="np-text">Nothing playing</span>
-              <button class="btn tiny ghost icon" data-action="spotify-refresh" title="Refresh now playing">⟳</button>
+              <button class="btn tiny ghost icon" data-action="spotify-refresh" title="Refresh now playing" aria-label="Refresh now playing">⟳</button>
             </div>
           </div>
 
           <button class="btn tiny ghost" data-action="toggle-label" id="label-toggle" aria-expanded="false" aria-controls="now-playing">＋ Add a label</button>
           <div class="now-playing" id="now-playing" hidden>
-            <input id="np-title" type="text" placeholder="Track title (optional)" />
-            <input id="np-artist" type="text" placeholder="Artist (optional)" />
+            <input id="np-title" type="text" placeholder="Track title (optional)" aria-label="Track title" />
+            <input id="np-artist" type="text" placeholder="Artist (optional)" aria-label="Artist" />
           </div>
           <button id="record-btn" class="btn record" data-action="record">
             <span class="rec-dot"></span><span class="rec-label">Record</span>
@@ -178,21 +178,21 @@
         </section>
       </aside>
 
-      <div id="detail-overlay" class="modal-overlay" hidden>
+      <div id="detail-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="detail-title" tabindex="-1" hidden>
         <div class="modal detail-modal">
           <div class="modal-head">
             <h2 id="detail-title">Session</h2>
-            <button class="btn tiny ghost" data-action="hide-detail">✕</button>
+            <button class="btn tiny ghost" data-action="hide-detail" aria-label="Close">✕</button>
           </div>
           <div id="detail-body" class="modal-body"></div>
         </div>
       </div>
 
-      <div id="install-hint-overlay" class="modal-overlay" hidden>
+      <div id="install-hint-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="install-hint-title" tabindex="-1" hidden>
         <div class="modal">
           <div class="modal-head">
-            <h2>Add to Home Screen</h2>
-            <button class="btn tiny ghost" data-action="hide-install-hint">✕</button>
+            <h2 id="install-hint-title">Add to Home Screen</h2>
+            <button class="btn tiny ghost" data-action="hide-install-hint" aria-label="Close">✕</button>
           </div>
           <div class="modal-body">
             <p>To install EchoVault on your iPhone or iPad:</p>
@@ -208,11 +208,11 @@
         </div>
       </div>
 
-      <div id="intro-overlay" class="modal-overlay" hidden>
+      <div id="intro-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="intro-title" tabindex="-1" hidden>
         <div class="modal intro-modal">
           <div class="modal-head">
-            <h2>Welcome to EchoVault 🔊</h2>
-            <button class="btn tiny ghost" data-action="hide-intro">✕</button>
+            <h2 id="intro-title">Welcome to EchoVault 🔊</h2>
+            <button class="btn tiny ghost" data-action="hide-intro" aria-label="Close">✕</button>
           </div>
           <div class="modal-body">
             <p class="intro-lead">EchoVault turns any sound into live visuals — and quietly builds a little library of how your music <em>sounds</em>, so you can look back on it later.</p>
@@ -229,11 +229,11 @@
         </div>
       </div>
 
-      <div id="scan-overlay" class="modal-overlay" hidden>
+      <div id="scan-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="scan-title" tabindex="-1" hidden>
         <div class="modal">
           <div class="modal-head">
-            <h2>🎵 Scan library</h2>
-            <button class="btn tiny ghost" data-action="hide-scan" id="scan-close">✕</button>
+            <h2 id="scan-title">🎵 Scan library</h2>
+            <button class="btn tiny ghost" data-action="hide-scan" id="scan-close" aria-label="Close">✕</button>
           </div>
           <div class="modal-body">
             <div id="scan-choose">
@@ -256,11 +256,11 @@
         </div>
       </div>
 
-      <div id="settings-overlay" class="modal-overlay" hidden>
+      <div id="settings-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1" hidden>
         <div class="modal">
           <div class="modal-head">
-            <h2>⚙ Settings</h2>
-            <button class="btn tiny ghost" data-action="hide-settings">✕</button>
+            <h2 id="settings-title">⚙ Settings</h2>
+            <button class="btn tiny ghost" data-action="hide-settings" aria-label="Close">✕</button>
           </div>
           <div class="modal-body">
             <label class="set-row">
@@ -314,25 +314,25 @@
         </div>
       </div>
 
-      <div id="library-overlay" class="analytics-overlay" hidden>
+      <div id="library-overlay" class="analytics-overlay" role="dialog" aria-modal="true" aria-labelledby="library-title" tabindex="-1" hidden>
         <div class="analytics-head">
-          <h2>🎵 Library</h2>
+          <h2 id="library-title">🎵 Library</h2>
           <div class="analytics-controls">
             <button class="btn tiny" data-action="scan-library" title="Scan a music folder or files to add songs">📂 Scan music</button>
             <button class="btn tiny ghost" data-action="load-starter" title="Import the curated starter library — fingerprints only, no audio">✨ Starter</button>
             <input id="lib-search" class="history-search lib-search" type="search" placeholder="Search title or artist…" aria-label="Search library" />
-            <button class="btn tiny ghost" data-action="hide-library">Close ✕</button>
+            <button class="btn tiny ghost" data-action="hide-library" aria-label="Close library">Close ✕</button>
           </div>
         </div>
         <div id="library-body" class="analytics-body"></div>
       </div>
 
-      <div id="analytics-overlay" class="analytics-overlay" hidden>
+      <div id="analytics-overlay" class="analytics-overlay" role="dialog" aria-modal="true" aria-labelledby="analytics-title" tabindex="-1" hidden>
         <div class="analytics-head">
-          <h2>📊 Vault analytics</h2>
+          <h2 id="analytics-title">📊 Vault analytics</h2>
           <div class="analytics-controls">
             <label class="toggle" title="Exclude microphone captures (which include your speaker + room) from trends"><input type="checkbox" id="an-file-only" /> Digital only (exclude mic)</label>
-            <button class="btn tiny ghost" data-action="hide-analytics">Close ✕</button>
+            <button class="btn tiny ghost" data-action="hide-analytics" aria-label="Close analytics">Close ✕</button>
           </div>
         </div>
         <div id="analytics-body" class="analytics-body"></div>

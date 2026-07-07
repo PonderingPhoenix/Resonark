@@ -14,6 +14,7 @@ import { renderHistory, exportAll } from './ui/history.js'
 import { renderAnalytics } from './ui/analytics.js'
 import { renderLibrary } from './ui/library.js'
 import { toast } from './ui/toast.js'
+import { initModals } from './ui/modal.js'
 import { SpotifyClient } from './integrations/spotify.js'
 import { loadSettings, saveSettings, DEFAULT_SETTINGS } from './settings.js'
 import { PALETTES } from './utils/colors.js'
@@ -71,6 +72,10 @@ const overlayMeters = {
 const fileInput = $('#file-input')
 const transport = $('#transport')
 const playBtn = $('[data-action="playpause"]')
+const setPlayGlyph = (playing) => {
+  playBtn.textContent = playing ? '❚❚' : '▶'
+  playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play')
+}
 const seek = $('#seek')
 const timeLabel = $('#time')
 const sourceName = $('#source-name')
@@ -525,10 +530,10 @@ async function startFile(file) {
   transport.hidden = false
   setLive(true, file.name)
   collapseIfNarrow()
-  playBtn.textContent = '❚❚'
+  setPlayGlyph(true)
   el.play().catch(() => {})
   el.addEventListener('ended', () => {
-    playBtn.textContent = '▶'
+    setPlayGlyph(false)
     if (recorder.recording) stopRecording()
   })
   applyFileTags(file) // read embedded title/artist in the background
@@ -938,10 +943,10 @@ document.addEventListener('click', (e) => {
       if (engine.mediaEl) {
         if (engine.mediaEl.paused) {
           engine.mediaEl.play()
-          playBtn.textContent = '❚❚'
+          setPlayGlyph(true)
         } else {
           engine.mediaEl.pause()
-          playBtn.textContent = '▶'
+          setPlayGlyph(false)
         }
       }
       break
@@ -1200,17 +1205,22 @@ seek.addEventListener('input', () => {
 const overlays = () => [settingsOverlay, analyticsOverlay, libraryOverlay, scanOverlay, introOverlay, installHintOverlay, document.getElementById('detail-overlay')]
 const anyOverlayOpen = () => overlays().some((o) => o && !o.hidden)
 const closeOverlays = () => overlays().forEach((o) => { if (o) o.hidden = true })
+// Dialog semantics: focus in on open, trap Tab, restore focus + backdrop-close.
+initModals(overlays())
 
 window.addEventListener('keydown', (e) => {
   const t = e.target
-  if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
+  const typing = t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
   if (e.metaKey || e.ctrlKey || e.altKey) return
 
+  // Escape works everywhere — including from a focused field inside a modal.
   if (e.key === 'Escape') {
+    if (typing && t.blur) t.blur()
     if (anyOverlayOpen()) { closeOverlays(); e.preventDefault() }
     else if (isNarrow() && !appEl.classList.contains('menu-collapsed')) { setPanel(false); e.preventDefault() }
     return
   }
+  if (typing) return // don't hijack typing for shortcuts
   if (anyOverlayOpen()) return // while a modal is open, only Esc is active
 
   if (e.key === ' ') { // record / stop

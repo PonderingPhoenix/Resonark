@@ -104,7 +104,9 @@ function row(r, onChange) {
   del.className = 'lib-del'
   del.textContent = '✕'
   del.title = 'Remove from library'
+  del.setAttribute('aria-label', `Remove ${r.title || 'this song'} from library`)
   del.addEventListener('click', async () => {
+    if (!confirm(`Remove “${r.title || 'this song'}” from your library?`)) return
     await deleteReference(r.trackKey)
     onChange()
   })

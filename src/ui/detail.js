@@ -146,6 +146,8 @@ export function openDetail(session, refMap, onChange) {
   del.className = 'btn tiny ghost danger'
   del.textContent = 'Delete session'
   del.addEventListener('click', async () => {
+    const name = session.label?.title ? `“${session.label.title}”` : 'this recording'
+    if (!confirm(`Delete ${name}? This can't be undone.`)) return
     await deleteSession(session.id)
     overlay.hidden = true
     if (onChange) onChange()

@@ -191,6 +191,8 @@ function card(session, refs, onChange, opts = {}) {
   del.className = 'btn tiny ghost danger'
   del.textContent = 'Delete'
   del.addEventListener('click', async () => {
+    const name = session.label?.title ? `“${session.label.title}”` : 'this recording'
+    if (!confirm(`Delete ${name}? This can't be undone.`)) return
     await deleteSession(session.id)
     onChange()
   })
