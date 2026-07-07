@@ -200,24 +200,31 @@ body { overflow: hidden; }
 .capture-chip.env { color: #ffb13d !important; border-color: #ffb13d44 !important; }
 .capture-chip.ref { color: #6ad1ff !important; border-color: #6ad1ff44 !important; }
 
-.recent-list { display: flex; flex-direction: column; gap: 4px; max-height: 240px; overflow-y: auto; }
+.recent-list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; padding-right: 2px; }
 .recent-item {
-  display: flex; align-items: stretch; gap: 4px;
-  background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
-  overflow: hidden;
+  display: flex; align-items: stretch; gap: 2px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px;
+  overflow: hidden; transition: border-color .12s ease, background .12s ease;
 }
-.recent-item:hover { border-color: #2c3450; }
-.recent-item.selected { border-color: #1db954; background: rgba(29,185,84,0.10); }
+.recent-item:hover { border-color: #2c3450; background: #10141f; }
+.recent-item.selected { border-color: #1db954; background: rgba(29,185,84,0.12); }
 .recent-main-btn {
   flex: 1; min-width: 0; text-align: left; cursor: pointer;
-  display: flex; flex-direction: column; gap: 1px;
-  background: transparent; border: none; color: var(--text); padding: 7px 9px;
+  display: flex; align-items: center; gap: 10px;
+  background: transparent; border: none; color: var(--text); padding: 7px 8px;
 }
-.recent-main-btn:hover { background: #151a28; }
-.recent-main { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recent-main-btn:hover { background: rgba(255,255,255,0.03); }
+.recent-art {
+  flex: none; width: 40px; height: 40px; border-radius: 7px; object-fit: cover;
+  background: #0c111c; box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+}
+.recent-art-ph { display: grid; place-items: center; color: var(--muted); font-size: 17px; }
+.recent-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.recent-main { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .recent-sub { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recent-item.selected .recent-main { color: #4ade80; }
 .recent-add {
-  flex: none; width: 34px; cursor: pointer; font-size: 15px;
+  flex: none; width: 40px; cursor: pointer; font-size: 16px;
   background: transparent; border: none; border-left: 1px solid var(--line); color: var(--accent);
 }
 .recent-add:hover { background: rgba(78,163,255,0.12); }
