@@ -1,0 +1,3 @@
+# Keep blank issues available alongside the templates. If you enable GitHub
+# Discussions, add a contact_link here pointing users there for questions.
+blank_issues_enabled: true
