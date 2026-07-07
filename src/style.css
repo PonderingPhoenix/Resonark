@@ -358,6 +358,24 @@ body { overflow: hidden; }
 }
 .now-bar-text { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+/* Spotify metadata visualization banner — bottom center, with an actionable button. */
+.spotify-ambient {
+  position: absolute; z-index: 6;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
+  max-width: min(92%, 560px);
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px 9px 16px; border-radius: 14px;
+  background: rgba(8, 10, 18, 0.55); border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+.spotify-ambient .sa-text { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.spotify-ambient .sa-text b { color: var(--text); font-weight: 700; }
+.spotify-ambient .btn { flex: none; white-space: nowrap; }
+@media (max-width: 720px) {
+  .spotify-ambient { flex-direction: column; align-items: stretch; text-align: center; bottom: 12px; }
+}
+
 /* ---- Modal (settings) ---- */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 60;

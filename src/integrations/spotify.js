@@ -193,11 +193,11 @@ export class SpotifyClient {
     const res = await fetch(`${API}/me/player/currently-playing`, {
       headers: { Authorization: `Bearer ${access}` },
     })
-    if (res.status === 204) return { isPlaying: false, track: null } // nothing playing
+    if (res.status === 204) return { isPlaying: false, track: null, progressMs: 0 } // nothing playing
     if (res.status === 401) { this.disconnect(); return null }
     if (!res.ok) return null
     const data = await res.json()
-    return { isPlaying: !!data.is_playing, track: mapTrack(data.item) }
+    return { isPlaying: !!data.is_playing, track: mapTrack(data.item), progressMs: data.progress_ms || 0 }
   }
 
   /** @returns {Promise<Array<object>>} most-recent first; metadata only. */

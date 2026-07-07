@@ -53,6 +53,13 @@
           <span id="now-bar-text" class="now-bar-text"></span>
         </div>
 
+        <!-- Spotify metadata visualization banner (shown when animating from metadata,
+             no live audio). Offers a one-tap way to capture the real sound. -->
+        <div id="spotify-ambient" class="spotify-ambient" hidden>
+          <span class="sa-text">🎧 Visualizing <b id="sa-track"></b> from Spotify — this is animated from the metadata, not the live sound.</span>
+          <button class="btn tiny" data-action="visualize-real" title="Capture this device's / tab's sound so the visualizer reacts to the real audio">🎤 Visualize the real sound</button>
+        </div>
+
         <!-- Idle / "press play" hint -->
         <div id="hint" class="hint">
           <h1>Resonark</h1>
@@ -304,6 +311,10 @@
             <label class="set-row toggle-row">
               <span>Auto-listen with mic on open <em>once permission is granted</em></span>
               <input id="set-autolisten" type="checkbox" />
+            </label>
+            <label class="set-row toggle-row">
+              <span>Animate from Spotify when nothing's captured <em>a metadata visual, not the live sound</em></span>
+              <input id="set-spotify-ambient" type="checkbox" />
             </label>
             <div class="modal-actions">
               <button class="btn tiny ghost" data-action="reset-settings">Reset to defaults</button>
