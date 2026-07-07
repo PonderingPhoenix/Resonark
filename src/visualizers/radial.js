@@ -16,16 +16,18 @@ export const radial = {
     const cx = w / 2
     const cy = h / 2
     const n = bands.length
-    const baseR = Math.min(w, h) * 0.16
-    const maxLen = Math.min(w, h) * 0.34 * (0.7 + size * 0.3)
-    const coreHue = bandHue(0, n, palette)
     const bass = (features?.bass || 0) / 255
     const treble = (features?.treble || 0) / 255
+    const loud = (features?.rms || 0) / 255
     const beat = features?.beat || 0
+    const pace = features?.pace || 1
+    const baseR = Math.min(w, h) * 0.16
+    const maxLen = Math.min(w, h) * 0.34 * (0.7 + size * 0.3) * (0.85 + loud * 0.4) // spokes reach further when loud
+    const coreHue = bandHue(0, n, palette)
     const pulse = baseR * (1 + bass * 0.22 + beat * 0.45) // core throbs on the beat
 
-    // slow rotation that speeds up with treble
-    this._rot += 0.002 + treble * 0.02
+    // rotation keeps time with the song, quickening on treble
+    this._rot += (0.002 + treble * 0.02) * pace
 
     ctx.save()
     ctx.translate(cx, cy)

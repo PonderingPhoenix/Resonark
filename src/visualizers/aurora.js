@@ -17,8 +17,9 @@ export const aurora = {
     const size = viz?.size || 1
     const beat = features?.beat || 0
     const loud = (features?.rms || 0) / 255
+    const pace = features?.pace || 1
     const n = bands.length
-    this._t += 0.008 + loud * 0.03
+    this._t += (0.008 + loud * 0.03) * pace
 
     ctx.globalCompositeOperation = 'lighter'
     const layers = 5

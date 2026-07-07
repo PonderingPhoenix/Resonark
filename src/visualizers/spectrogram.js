@@ -28,12 +28,14 @@ export const spectrogram = {
     this._h = h
   },
 
-  draw({ ctx, w, h, bands, viz }) {
+  draw({ ctx, w, h, bands, features, viz }) {
     this._ensure(w, h)
     const palette = viz?.palette
     const size = viz?.size || 1
+    const pace = features?.pace || 1
     const x = this._x
-    const colW = Math.max(1, Math.round(w * 0.004 * size))
+    // Column advanced per frame sets the scroll speed — quicker for faster songs.
+    const colW = Math.max(1, Math.round(w * 0.004 * size * (0.55 + pace * 0.6)))
 
     // scroll left
     x.globalCompositeOperation = 'copy'

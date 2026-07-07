@@ -3,6 +3,19 @@
 All notable changes to Resonark are documented here. This project roughly
 follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Visualize
+- **Tempo-reactive motion** — the app now estimates the song's tempo from the
+  beat and drives a shared animation "pace," so every mode speeds up for fast
+  songs and eases for slow ones (falls back to loudness when there's no clear
+  beat). Every art mode reacts more to loudness, brightness and the beat.
+- **Lava Lamp** (formerly Plasma) — reworked into a warm metaball fluid of
+  blobs that rise, bob and merge, swelling with the bass and flaring on the beat.
+- **Kaleidoscope** — now cycles at random through several geometric motifs
+  (petals, arcs, webs, nested polygons, dot lattices) with varying mirror-segment
+  counts and spin, and fills the screen corner-to-corner at full size.
+
 ## 0.1.0 — first public release
 
 The initial open-source (GPL-3.0) release: a local-first PWA that visualizes
