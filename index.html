@@ -86,7 +86,10 @@
           <p id="system-tip" class="muted small system-tip" hidden>
             💡 <b>File</b> or <b>Mic</b> are easiest. <b>System</b> captures another tab's sound (advanced).
           </p>
-          <input id="file-input" type="file" accept="audio/*" hidden />
+          <!-- Explicit extensions (not just audio/*) so pickers that report .wav
+               with a non-audio/* MIME (audio/wave, application/octet-stream, blank)
+               still let the file be selected. -->
+          <input id="file-input" type="file" accept="audio/*,audio/wav,audio/wave,audio/x-wav,audio/vnd.wave,.wav,.wave,.mp3,.m4a,.mp4,.aac,.flac,.ogg,.oga,.opus,.aiff,.aif,.alac,.wma" hidden />
           <div id="transport" class="transport" hidden>
             <button id="playpause-btn" class="btn icon" data-action="playpause" title="Play / pause" aria-label="Play">▶</button>
             <input id="seek" class="seek" type="range" min="0" max="1000" value="0" aria-label="Seek" />
@@ -177,8 +180,8 @@
             </div>
           </div>
           <input id="import-input" type="file" accept="application/json,.json" hidden />
-          <input id="scan-input" type="file" accept="audio/*" multiple webkitdirectory hidden />
-          <input id="scan-files-input" type="file" accept="audio/*" multiple hidden />
+          <input id="scan-input" type="file" accept="audio/*,audio/wav,audio/wave,audio/x-wav,audio/vnd.wave,.wav,.wave,.mp3,.m4a,.mp4,.aac,.flac,.ogg,.oga,.opus,.aiff,.aif,.alac,.wma" multiple webkitdirectory hidden />
+          <input id="scan-files-input" type="file" accept="audio/*,audio/wav,audio/wave,audio/x-wav,audio/vnd.wave,.wav,.wave,.mp3,.m4a,.mp4,.aac,.flac,.ogg,.oga,.opus,.aiff,.aif,.alac,.wma" multiple hidden />
           <div class="history-filter">
             <input id="history-search" class="history-search" type="search" placeholder="Search title or artist…" aria-label="Search vault" />
             <select id="history-mood" class="opt-select" aria-label="Filter by mood"></select>
