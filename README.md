@@ -1,6 +1,11 @@
 # 🔊 Resonark
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![PWA](https://img.shields.io/badge/PWA-installable%20%C2%B7%20offline-5a8cff.svg)](docs/DEPLOY.md)
+
+<p align="center">
+  <img src="public/og-image.png" alt="Resonark — see your music come alive, then keep how it sounds" width="840">
+</p>
 
 A music visualizer and **media multi-analyzer** that does two things most
 visualizers don't bother with:
@@ -9,8 +14,8 @@ visualizers don't bother with:
    The **Meter (RTA)** mode is an audio multimeter — level in dBFS, the dominant
    frequency + nearest musical note, and an octave-band real-time analyzer — so
    pointing the mic at your system reads out your actual *speaker + room*. There
-   are also fun abstract modes (spectrum bars, radial burst, reactive particle
-   field, scrolling spectrogram, oscilloscope).
+   are also a dozen expressive looks — bars, a radial bloom, aurora curtains, a
+   3-D tunnel, a kaleidoscope, a plasma field, and more.
 2. **Remembers** it. Every session can be recorded into a local *vault* as a
    compact spectral fingerprint (a downsampled spectrogram thumbnail + summary
    statistics), so you can build a queryable history of how the things you
@@ -18,6 +23,15 @@ visualizers don't bother with:
 
 The visualizer is the eye-candy. The **vault is the point** — it turns ephemeral
 spectrum eye-candy into a personal "music DNA log."
+
+## Visual modes
+
+Twelve looks, from pure measurement to eye-candy — **Bars · Particles · Bloom ·
+Aurora · Rings · Tunnel · Kaleidoscope · Plasma · Waterfall · Wave · Levels ·
+Meter (RTA)**. Switch anytime; each reacts to the beat and your chosen palette,
+and any frame can be saved as a PNG.
+
+![Resonark visual modes](docs/gallery.png)
 
 ## Quick start
 
