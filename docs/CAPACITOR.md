@@ -1,9 +1,9 @@
-# EchoVault on mobile (Capacitor)
+# Resonark on mobile (Capacitor)
 
-EchoVault is wrapped with [Capacitor](https://capacitorjs.com) so the same web
+Resonark is wrapped with [Capacitor](https://capacitorjs.com) so the same web
 app can ship as a native **Android** app (and iOS, with the caveat below).
 
-> **What native actually adds.** EchoVault already installs to a phone home
+> **What native actually adds.** Resonark already installs to a phone home
 > screen as a **PWA** (Add to Home Screen) with offline support. The reason to
 > go native is (1) Play Store / App Store distribution and a real app shell, and
 > (2) the *possibility* of **true system-audio capture** on Android via a native
@@ -47,7 +47,7 @@ npm run cap:sync         # npm run build && cap sync
 `npx cap add ios` will scaffold an Xcode project and the app runs the same. But
 **iOS does not allow third-party apps to capture other apps' audio** (Spotify,
 Apple Music, etc.) — Apple's sandbox forbids it, with no workaround. So on iOS
-EchoVault is mic + file only. The system-audio plugin below is **Android-only**.
+Resonark is mic + file only. The system-audio plugin below is **Android-only**.
 
 ## App icons / splash
 

@@ -9,8 +9,20 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://i.scdn.co; media-src 'self' blob:; connect-src 'self' https://accounts.spotify.com https://api.spotify.com; worker-src 'self'; manifest-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#05060a" />
-    <title>EchoVault · music visualizer & spectral vault</title>
+    <title>Resonark · music visualizer & spectral vault</title>
+    <meta name="description" content="See your music come alive — then keep how it sounds. A music visualizer and private, local-first spectral vault. No account, nothing leaves your device." />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>%F0%9F%94%8A</text></svg>" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <!-- Social preview. For reliable link unfurls, set og:image/twitter:image to
+         the ABSOLUTE production URL (https://yourdomain/og-image.png) — see DEPLOY.md. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Resonark — music visualizer & spectral vault" />
+    <meta property="og:description" content="See your music come alive — then keep how it sounds. Local-first, no account." />
+    <meta property="og:image" content="og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Resonark — music visualizer & spectral vault" />
+    <meta name="twitter:description" content="See your music come alive — then keep how it sounds." />
+    <meta name="twitter:image" content="og-image.png" />
   </head>
   <body>
     <div id="app">
@@ -23,7 +35,7 @@
         <div id="overlay" class="overlay" aria-hidden="true">
           <div class="brand">
             <span class="brand-mark">🔊</span>
-            <span class="brand-name">EchoVault</span>
+            <span class="brand-name">Resonark</span>
           </div>
           <div id="readouts" class="readouts" hidden>
             <div class="meter"><label>Loudness</label><div class="bar"><i data-meter="loudness"></i></div></div>
@@ -42,7 +54,7 @@
 
         <!-- Idle / "press play" hint -->
         <div id="hint" class="hint">
-          <h1>EchoVault</h1>
+          <h1>Resonark</h1>
           <p>See your music come alive — then save how it sounds. Play a song or turn on your mic to begin.</p>
           <div class="hint-actions">
             <button class="btn primary" data-action="pick-file">🎵 Play a song</button>
@@ -53,13 +65,13 @@
       </main>
 
       <aside id="panel">
-        <button id="install-btn" class="btn tiny install-btn" data-action="install-app" hidden>⬇ Install EchoVault as an app</button>
+        <button id="install-btn" class="btn tiny install-btn" data-action="install-app" hidden>⬇ Install Resonark as an app</button>
 
         <nav class="panel-nav">
           <button class="btn tiny nav-btn" data-action="show-analytics" title="Listening analytics">📊 Analytics</button>
-          <button class="btn tiny nav-btn" data-action="show-library" title="Browse every song EchoVault knows">🎵 Library</button>
+          <button class="btn tiny nav-btn" data-action="show-library" title="Browse every song Resonark knows">🎵 Library</button>
           <span class="nav-spacer"></span>
-          <button class="btn tiny ghost icon" data-action="show-intro" title="How EchoVault works" aria-label="How EchoVault works">ⓘ</button>
+          <button class="btn tiny ghost icon" data-action="show-intro" title="How Resonark works" aria-label="How Resonark works">ⓘ</button>
           <button class="btn tiny ghost icon" data-action="show-settings" title="Settings" aria-label="Settings">⚙</button>
         </nav>
 
@@ -196,11 +208,11 @@
             <button class="btn tiny ghost" data-action="hide-install-hint" aria-label="Close">✕</button>
           </div>
           <div class="modal-body">
-            <p>To install EchoVault on your iPhone or iPad:</p>
+            <p>To install Resonark on your iPhone or iPad:</p>
             <ol class="intro-steps">
               <li><span class="intro-emoji">⬆️</span><div>Tap the <b>Share</b> button in Safari's toolbar.</div></li>
               <li><span class="intro-emoji">➕</span><div>Choose <b>Add to Home Screen</b>.</div></li>
-              <li><span class="intro-emoji">✅</span><div>Tap <b>Add</b> — EchoVault opens full-screen, like a native app.</div></li>
+              <li><span class="intro-emoji">✅</span><div>Tap <b>Add</b> — Resonark opens full-screen, like a native app.</div></li>
             </ol>
             <div class="modal-actions">
               <button class="btn primary" data-action="hide-install-hint">Got it</button>
@@ -212,11 +224,11 @@
       <div id="intro-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="intro-title" tabindex="-1" hidden>
         <div class="modal intro-modal">
           <div class="modal-head">
-            <h2 id="intro-title">Welcome to EchoVault 🔊</h2>
+            <h2 id="intro-title">Welcome to Resonark 🔊</h2>
             <button class="btn tiny ghost" data-action="hide-intro" aria-label="Close">✕</button>
           </div>
           <div class="modal-body">
-            <p class="intro-lead">EchoVault turns any sound into live visuals — and quietly builds a little library of how your music <em>sounds</em>, so you can look back on it later.</p>
+            <p class="intro-lead">Resonark turns any sound into live visuals — and quietly builds a little library of how your music <em>sounds</em>, so you can look back on it later.</p>
             <ol class="intro-steps">
               <li><span class="intro-emoji">🎵</span><div><b>Pick a source.</b> Play a music file, use your microphone, or capture this device's own sound.</div></li>
               <li><span class="intro-emoji">🎨</span><div><b>Watch it react.</b> Switch between visual modes — Bars, Particles, Bloom and more. They dance to the beat.</div></li>
@@ -238,7 +250,7 @@
           </div>
           <div class="modal-body">
             <div id="scan-choose">
-              <p class="muted small">Add your music so EchoVault can recognize it. It reads each file's tags and, where your browser can decode it, a sound fingerprint. Everything stays on your device.</p>
+              <p class="muted small">Add your music so Resonark can recognize it. It reads each file's tags and, where your browser can decode it, a sound fingerprint. Everything stays on your device.</p>
               <div class="scan-choices">
                 <button class="btn" data-action="pick-scan-folder">📁 Scan a folder</button>
                 <button class="btn" data-action="pick-scan-files">🎵 Choose files</button>

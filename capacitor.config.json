@@ -1,6 +1,6 @@
 {
-  "appId": "com.echovault.app",
-  "appName": "EchoVault",
+  "appId": "com.resonark.app",
+  "appName": "Resonark",
   "webDir": "dist",
   "backgroundColor": "#05060a",
   "android": {

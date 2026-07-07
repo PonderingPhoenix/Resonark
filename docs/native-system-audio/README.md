@@ -2,7 +2,7 @@
 
 This folder is a **starting point**, not wired into the build. It captures *all
 device audio* (music from Spotify/YouTube/etc.) natively via Android's
-`MediaProjection` + `AudioPlaybackCapture` and feeds it into EchoVault's existing
+`MediaProjection` + `AudioPlaybackCapture` and feeds it into Resonark's existing
 analyser, so the visualizer/meter/vault all work on streamed audio with no mic.
 
 > ⚠️ **Read first**

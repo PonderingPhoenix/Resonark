@@ -177,7 +177,7 @@ function saveSnapshot() {
     const a = document.createElement('a')
     const title = (npTitle.value || currentTrack?.title || '').trim()
     const tag = title ? '-' + title.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase().slice(0, 40) : ''
-    a.download = `echovault-${activeViz.name}${tag}.png`
+    a.download = `resonark-${activeViz.name}${tag}.png`
     a.href = url
     a.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
@@ -201,7 +201,7 @@ function stampSnapshot(c, w, h) {
   c.textAlign = 'right'
   c.font = `600 ${fs}px system-ui, -apple-system, sans-serif`
   c.fillStyle = 'rgba(255,255,255,0.82)'
-  c.fillText('🔊 EchoVault', w - pad, h - pad)
+  c.fillText('🔊 Resonark', w - pad, h - pad)
   // Track, bottom-left.
   if (title) {
     c.textAlign = 'left'
@@ -1169,7 +1169,7 @@ async function importVault(file) {
   try {
     data = JSON.parse(await file.text())
   } catch {
-    alert('That file is not a valid EchoVault JSON export.')
+    alert('That file is not a valid Resonark JSON export.')
     return
   }
   // Accept both the current { sessions, references } shape and the older
@@ -1371,7 +1371,7 @@ if (import.meta.env.PROD) {
   import('virtual:pwa-register').then(({ registerSW }) => {
     const updateSW = registerSW({
       onNeedRefresh() {
-        toast('A new version of EchoVault is ready.', {
+        toast('A new version of Resonark is ready.', {
           type: 'info', timeout: 0,
           action: { label: 'Reload', onClick: () => updateSW(true) },
         })

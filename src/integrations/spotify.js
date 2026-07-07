@@ -1,5 +1,5 @@
 // Spotify integration using the Authorization Code + PKCE flow — a fully
-// client-side OAuth flow that needs no server and no client secret. EchoVault
+// client-side OAuth flow that needs no server and no client secret. Resonark
 // uses it for two things:
 //   - currently-playing   → auto-label a recording with the track being played
 //   - recently-played     → show a readable listening-history list

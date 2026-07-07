@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
-// EchoVault is a static, client-only app (no backend). `base: './'` keeps the
+// Resonark is a static, client-only app (no backend). `base: './'` keeps the
 // build portable so it can be dropped into any static host or wrapped by
 // Capacitor for mobile later. The PWA plugin makes it installable and
 // offline-capable — a natural fit for a local-first vault.
@@ -31,8 +31,8 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ['icon-192.png', 'icon-512.png', 'maskable-512.png'],
       manifest: {
         id: '/',
-        name: 'EchoVault — music visualizer & spectral vault',
-        short_name: 'EchoVault',
+        name: 'Resonark — music visualizer & spectral vault',
+        short_name: 'Resonark',
         description: 'Measure what you hear and record a spectral fingerprint of it — a music visualizer and personal spectral vault.',
         theme_color: '#05060a',
         background_color: '#05060a',
@@ -50,6 +50,9 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         // Include json so the starter reference pack is available offline.
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest,woff2,json}'],
+        // The social-preview image is only fetched by link-unfurl crawlers, never
+        // by the running app — keep it out of the offline precache.
+        globIgnores: ['**/og-image.png'],
         navigateFallback: 'index.html',
       },
     }),

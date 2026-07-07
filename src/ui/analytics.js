@@ -215,7 +215,7 @@ export async function renderAnalytics(root, opts = {}) {
   const strong = pairs.filter((p) => p.confidence === 'ok').length
   const pColor = panel('Speaker / room coloration', pairs.length ? `${pairs.length} track${pairs.length > 1 ? 's' : ''} compared · ${strong} high-confidence` : 'mic vs clean reference', 'span2')
   if (!pairs.length) {
-    note(pColor, 'No comparable pairs yet. Capture a track from a file (seeds a clean reference), then record the same track via the mic — EchoVault will show how your speaker + room color it.')
+    note(pColor, 'No comparable pairs yet. Capture a track from a file (seeds a clean reference), then record the same track via the mic — Resonark will show how your speaker + room color it.')
   } else {
     addChart(pColor, 150, (c, w, h) => divergingCurve(c, w, h, agg.delta, { freqLabels: freqLabels() }))
     const cap = document.createElement('p')

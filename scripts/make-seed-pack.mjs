@@ -1,10 +1,10 @@
-// Build a curated starter reference pack from one or more EchoVault vault
+// Build a curated starter reference pack from one or more Resonark vault
 // exports. Keeps only fingerprinted references (title/artist + spectrogram),
 // dedupes by track key (the longest capture wins), strips sessions and any
 // per-device fields, and tags each as source:"starter".
 //
 // Workflow for the maintainer:
-//   1. In EchoVault: 📂 Scan your music folder (builds the reference library).
+//   1. In Resonark: 📂 Scan your music folder (builds the reference library).
 //   2. Settings → Your data → ⬇ Export vault  (gives you a JSON file).
 //   3. node scripts/make-seed-pack.mjs my-export.json -o public/starter-references.json
 //   4. Commit + deploy. Everyone can now one-tap "Load starter library".
@@ -59,7 +59,7 @@ const references = [...byKey.values()].sort(
   (a, b) => (a.artist || '').localeCompare(b.artist || '') || (a.title || '').localeCompare(b.title || ''),
 )
 const pack = {
-  name: 'EchoVault starter library',
+  name: 'Resonark starter library',
   generatedAt: new Date().toISOString(),
   count: references.length,
   references,

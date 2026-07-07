@@ -1,7 +1,7 @@
 import { listReferences, deleteReference } from '../vault/store.js'
 import { moodFromStats } from '../vault/mood.js'
 
-// The "Library" view: everything EchoVault knows as a song — references seeded
+// The "Library" view: everything Resonark knows as a song — references seeded
 // from clean captures and songs added by scanning a music folder. A searchable
 // list with each song's fingerprint status and mood, and a way to remove one.
 
