@@ -1,6 +1,6 @@
 # Curating the starter library (seed pack)
 
-EchoVault ships a **starter library** — a small, curated bundle of song
+Resonark ships a **starter library** — a small, curated bundle of song
 fingerprints so recognition works the moment someone opens the app, before
 they've scanned any of their own music. In the app it's the **✨ Starter**
 button in the Library view (and the "Load starter library" button on the empty
@@ -14,7 +14,7 @@ metadata — no audio and no listening sessions.**
 
 ```json
 {
-  "name": "EchoVault starter library",
+  "name": "Resonark starter library",
   "generatedAt": "2026-07-06T00:00:00.000Z",
   "count": 12,
   "references": [
@@ -42,7 +42,7 @@ generator, because a metadata-only entry can't be sound-matched.
 
 You curate the pack from your own vault:
 
-1. In EchoVault, **📂 Scan music** and point it at a folder (or pick files).
+1. In Resonark, **📂 Scan music** and point it at a folder (or pick files).
    This fingerprints each tagged track into your reference library.
 2. **Settings → Your data → ⬇ Export vault.** You get a JSON file containing
    your sessions and references.

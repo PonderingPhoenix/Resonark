@@ -1,4 +1,4 @@
-# 🔊 EchoVault
+# 🔊 Resonark
 
 A music visualizer and **media multi-analyzer** that does two things most
 visualizers don't bother with:
@@ -35,10 +35,14 @@ npm run build    # production build to dist/
 npm run preview  # preview the production build
 ```
 
-EchoVault is an installable **PWA**: the built app ships a web manifest + service
+Resonark is an installable **PWA**: the built app ships a web manifest + service
 worker (via `vite-plugin-pwa`), so you can install it to your home screen /
 desktop and it **works fully offline** — fitting, since the whole app (analysis
 and the vault) already runs client-side with no backend.
+
+Publishing it is just static hosting — see **[docs/DEPLOY.md](docs/DEPLOY.md)**
+(GitHub Pages is wired up in `.github/workflows/deploy.yml`; Netlify / Cloudflare
+Pages / Vercel work too), including the Spotify redirect-URI setup.
 
 ## How it works
 
@@ -55,10 +59,10 @@ You can't. Spotify (and Apple Music, YouTube Music, etc.) never expose the raw
 PCM stream — it's DRM-protected — and Spotify
 [deprecated its `audio-analysis` / `audio-features` endpoints in Nov 2024](https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api)
 for apps without prior access. So the only honest ways to get real spectrum data
-are **local files** or the **microphone**, both of which EchoVault supports.
+are **local files** or the **microphone**, both of which Resonark supports.
 
 Streaming services can still tell you *what* is playing (metadata), and
-EchoVault now pairs that with the spectrum it captures itself — see below.
+Resonark now pairs that with the spectrum it captures itself — see below.
 
 ## Spotify pairing (optional)
 
@@ -74,7 +78,7 @@ server and no client secret. Spotify's `currently-playing` and
 
 > ⚠️ **Metadata only.** Spotify never exposes the audio, so history/now-playing
 > give you the *name* of a track, not its sound. A recording only gets a real
-> spectral fingerprint when EchoVault actually hears the audio (file or mic);
+> spectral fingerprint when Resonark actually hears the audio (file or mic);
 > Spotify just supplies the label.
 
 ## Capture path: measurement vs reference
@@ -144,7 +148,7 @@ All aggregates exclude metadata-only logged plays (they have no measured
 spectrum), guard empty/single/silent inputs, and bucket time in your local zone.
 
 **Setup:** create an app at the
-[Spotify dashboard](https://developer.spotify.com/dashboard), add your EchoVault
+[Spotify dashboard](https://developer.spotify.com/dashboard), add your Resonark
 URL as a Redirect URI (use `http://127.0.0.1:5173/` for local dev — Spotify
 requires `127.0.0.1`, not `localhost`, for http), then either set
 `VITE_SPOTIFY_CLIENT_ID` (see `.env.example`) or paste the Client ID into the

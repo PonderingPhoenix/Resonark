@@ -4,6 +4,9 @@
 //                 from a clean file-path capture, so metadata-only plays of the
 //                 same track can inherit a spectrum.
 
+// Kept as the legacy 'echovault' name on purpose: renaming the database (and the
+// 'echovault.*' localStorage keys) would orphan every existing vault. The brand
+// is Resonark; the storage identifiers stay put so upgrades never lose data.
 const DB_NAME = 'echovault'
 const SESSIONS = 'sessions'
 const REFERENCES = 'references'
@@ -31,7 +34,7 @@ function openDb() {
     }
     req.onerror = () => reject(req.error)
     // A pending upgrade is blocked by another open connection (e.g. a second tab).
-    req.onblocked = () => reject(new Error('Storage upgrade blocked — please close other EchoVault tabs and reload.'))
+    req.onblocked = () => reject(new Error('Storage upgrade blocked — please close other Resonark tabs and reload.'))
   })
 }
 
