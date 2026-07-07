@@ -31,6 +31,14 @@ jobs:
       - run: npm ci
       - run: npm test          # unit suite must pass before we ship
       - run: npm run build
+        env:
+          # Bakes in a shared Spotify Client ID so "Connect Spotify" is one tap
+          # (no per-user dev setup). A Client ID is a public identifier, not a
+          # secret — it ends up in the shipped JS either way. Add it under
+          # Settings → Secrets and variables → Actions as a repository Variable
+          # (preferred) or Secret named VITE_SPOTIFY_CLIENT_ID. If unset (e.g. a
+          # fork), the app falls back to prompting the user for their own ID.
+          VITE_SPOTIFY_CLIENT_ID: ${{ vars.VITE_SPOTIFY_CLIENT_ID || secrets.VITE_SPOTIFY_CLIENT_ID }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
