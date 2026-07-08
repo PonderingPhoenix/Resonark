@@ -69,7 +69,7 @@ body { overflow: hidden; }
 }
 .brand:hover { border-color: rgba(120, 170, 255, 0.5); background: rgba(12, 16, 26, 0.62); }
 .brand:active { transform: scale(0.97); }
-.brand-mark { font-size: 20px; }
+.brand-img { width: 24px; height: 24px; border-radius: 6px; display: block; flex: none; }
 .brand-name { font-size: 17px; }
 
 /* Glass backing lives on the readouts themselves so an empty overlay shows nothing
@@ -526,7 +526,7 @@ kbd {
 }
 .brand-back:hover { border-color: rgba(120, 170, 255, 0.5); background: #10141f; }
 .brand-back:active { transform: scale(0.97); }
-.brand-back .brand-mark { font-size: 17px; }
+.brand-back .brand-img { width: 20px; height: 20px; }
 .brand-back .brand-name { font-size: 14px; }
 @media (max-width: 640px) { .brand-back .brand-name { display: none; } }
 .analytics-body { flex: 1; overflow-y: auto; padding: 18px 20px 40px; max-width: 1180px; width: 100%; margin: 0 auto; }
