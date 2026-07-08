@@ -33,6 +33,9 @@
       <main id="stage">
         <canvas id="viz" aria-hidden="true"></canvas>
 
+        <!-- Fullscreen / immersive exit (shown only in fullscreen). -->
+        <button id="fullscreen-exit" data-action="exit-fullscreen" title="Exit fullscreen (Esc)" aria-label="Exit fullscreen">✕</button>
+
         <!-- Persistent brand / home button — always visible; returns to the main view. -->
         <button class="brand" data-action="go-home" title="Back to Resonark" aria-label="Back to the main view">
           <img class="brand-img" src="icon-192.png" alt="" width="24" height="24" />
@@ -119,6 +122,7 @@
           <div class="mode-extra">
             <button class="btn tiny" data-action="surprise" title="Pick a look for me">🎲 Surprise me</button>
             <button class="btn tiny" data-action="snapshot" title="Save the current visual as a PNG image">📸 Snapshot</button>
+            <button class="btn tiny" data-action="enter-fullscreen" title="Fill the screen with the visualizer (Esc to exit)">⛶ Fullscreen</button>
             <button class="btn tiny ghost" data-action="toggle-customize" id="customize-toggle" aria-expanded="false" aria-controls="viz-opts">Customize ▾</button>
           </div>
           <div class="viz-opts" id="viz-opts" hidden>
