@@ -118,6 +118,8 @@ const npTitle = $('#np-title')
 const npArtist = $('#np-artist')
 const recentSection = $('#recent-section')
 const recentList = $('#recent-list')
+const pendingLabelEl = $('#pending-label')
+const pendingLabelText = $('#pl-text')
 const analyticsOverlay = $('#analytics-overlay')
 const analyticsBody = $('#analytics-body')
 const fileOnlyToggle = $('#an-file-only')
@@ -801,6 +803,20 @@ function stopSpotifyPolling() {
   pollTimer = null
 }
 
+// A picked label lives as a small chip just above Record (where it applies),
+// rather than popping the title/artist editor open at the top of the panel.
+function showPendingLabel(track) {
+  pendingLabelText.textContent = track.artist ? `${track.title} · ${track.artist}` : track.title
+  pendingLabelEl.hidden = false
+}
+function clearPendingLabel() {
+  pendingLabelTrack = null
+  pendingLabelEl.hidden = true
+  npTitle.value = ''
+  npArtist.value = ''
+  recentList.querySelectorAll('.recent-item.selected').forEach((x) => x.classList.remove('selected'))
+}
+
 async function renderRecent() {
   recentList.innerHTML = '<p class="muted small empty">Loading recent plays…</p>'
   const tracks = await spotify.getRecentlyPlayed(20)
@@ -831,18 +847,11 @@ async function renderRecent() {
     main.append(art, text)
     main.addEventListener('click', () => {
       pendingLabelTrack = t
-      npTitle.value = t.title
+      npTitle.value = t.title  // keep the manual label editor in sync if it's opened
       npArtist.value = t.artist
-      // Reveal the (collapsed) label fields so the picked track is visible.
-      const np = $('#now-playing')
-      if (np.hidden) {
-        np.hidden = false
-        const btn = $('#label-toggle')
-        btn.setAttribute('aria-expanded', 'true')
-        btn.textContent = '－ Hide label'
-      }
       recentList.querySelectorAll('.recent-item').forEach((x) => x.classList.remove('selected'))
       row.classList.add('selected')
+      showPendingLabel(t) // show it right above Record, not by popping the editor up top
     })
 
     const add = document.createElement('button')
@@ -953,6 +962,7 @@ async function stopRecording() {
   npTitle.value = ''
   npArtist.value = ''
   pendingLabelTrack = null
+  pendingLabelEl.hidden = true
   recentList.querySelectorAll('.recent-item.selected').forEach((x) => x.classList.remove('selected'))
 }
 
@@ -1253,6 +1263,9 @@ document.addEventListener('click', (e) => {
       break
     case 'spotify-recent-refresh':
       renderRecent()
+      break
+    case 'clear-label':
+      clearPendingLabel()
       break
   }
 })
