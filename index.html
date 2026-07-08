@@ -163,6 +163,11 @@
             <input id="np-title" type="text" placeholder="Track title (optional)" aria-label="Track title" />
             <input id="np-artist" type="text" placeholder="Artist (optional)" aria-label="Artist" />
           </div>
+          <div id="pending-label" class="pending-label" hidden>
+            <span class="pl-lead">LABEL</span>
+            <span id="pl-text" class="pl-text"></span>
+            <button class="btn tiny ghost icon pl-clear" data-action="clear-label" title="Clear label" aria-label="Clear label">✕</button>
+          </div>
           <button id="record-btn" class="btn record" data-action="record">
             <span class="rec-dot"></span><span class="rec-label">Record</span>
             <span id="rec-timer" class="rec-timer" hidden>0:00</span>
