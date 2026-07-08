@@ -649,7 +649,8 @@ input, textarea, .card-title, .card-artist { -webkit-user-select: text; user-sel
    with Capacitor or installed as a PWA in standalone mode. */
 @supports (padding: env(safe-area-inset-top)) {
   #panel { padding-top: calc(16px + env(safe-area-inset-top)); padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
-  .overlay { top: calc(18px + env(safe-area-inset-top)); left: calc(18px + env(safe-area-inset-left)); }
+  .brand { top: calc(18px + env(safe-area-inset-top)); left: calc(18px + env(safe-area-inset-left)); }
+  .overlay { top: calc(68px + env(safe-area-inset-top)); left: calc(18px + env(safe-area-inset-left)); }
   .analytics-head { padding-top: calc(14px + env(safe-area-inset-top)); }
   .analytics-body { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
   .modal-head { padding-top: calc(14px + env(safe-area-inset-top)); }
@@ -658,7 +659,7 @@ input, textarea, .card-title, .card-artist { -webkit-user-select: text; user-sel
   @supports (padding: env(safe-area-inset-top)) {
     /* The panel is now a full-height side drawer, so it keeps its own top
        safe-area padding (set in the drawer rule above). */
-    .overlay { top: calc(14px + env(safe-area-inset-top)); }
+    .overlay { top: calc(64px + env(safe-area-inset-top)); }
   }
 }
 
