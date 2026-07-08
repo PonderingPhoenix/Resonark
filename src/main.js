@@ -1176,6 +1176,10 @@ document.addEventListener('click', (e) => {
     case 'collapse-panel':
       setPanel(false)
       break
+    case 'go-home': // brand/logo → return to the main visualizer view
+      closeOverlays()
+      if (isNarrow()) setPanel(false)
+      break
     case 'show-intro':
       introOverlay.hidden = false
       break

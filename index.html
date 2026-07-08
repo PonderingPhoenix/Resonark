@@ -32,12 +32,14 @@
       <main id="stage">
         <canvas id="viz" aria-hidden="true"></canvas>
 
+        <!-- Persistent brand / home button — always visible; returns to the main view. -->
+        <button class="brand" data-action="go-home" title="Back to Resonark" aria-label="Back to the main view">
+          <span class="brand-mark">🔊</span>
+          <span class="brand-name">Resonark</span>
+        </button>
+
         <!-- Live readouts overlaid on the canvas (decorative) -->
         <div id="overlay" class="overlay" aria-hidden="true">
-          <div class="brand">
-            <span class="brand-mark">🔊</span>
-            <span class="brand-name">Resonark</span>
-          </div>
           <div id="readouts" class="readouts" hidden>
             <div class="meter"><label>Loudness</label><div class="bar"><i data-meter="loudness"></i></div></div>
             <div class="meter"><label>Brightness</label><div class="bar"><i data-meter="brightness"></i></div></div>
@@ -350,7 +352,12 @@
 
       <div id="library-overlay" class="analytics-overlay" role="dialog" aria-modal="true" aria-labelledby="library-title" tabindex="-1" hidden>
         <div class="analytics-head">
-          <h2 id="library-title">🎵 Library</h2>
+          <div class="head-left">
+            <button class="brand-back" data-action="go-home" title="Back to Resonark" aria-label="Back to the main view">
+              <span class="brand-mark">🔊</span><span class="brand-name">Resonark</span>
+            </button>
+            <h2 id="library-title">🎵 Library</h2>
+          </div>
           <div class="analytics-controls">
             <button class="btn tiny" data-action="scan-library" title="Scan a music folder or files to add songs">📂 Scan music</button>
             <button class="btn tiny ghost" data-action="load-starter" title="Import the curated starter library — fingerprints only, no audio">✨ Starter</button>
@@ -363,7 +370,12 @@
 
       <div id="analytics-overlay" class="analytics-overlay" role="dialog" aria-modal="true" aria-labelledby="analytics-title" tabindex="-1" hidden>
         <div class="analytics-head">
-          <h2 id="analytics-title">📊 Vault analytics</h2>
+          <div class="head-left">
+            <button class="brand-back" data-action="go-home" title="Back to Resonark" aria-label="Back to the main view">
+              <span class="brand-mark">🔊</span><span class="brand-name">Resonark</span>
+            </button>
+            <h2 id="analytics-title">📊 Vault analytics</h2>
+          </div>
           <div class="analytics-controls">
             <label class="toggle" title="Exclude microphone captures (which include your speaker + room) from trends"><input type="checkbox" id="an-file-only" /> Digital only (exclude mic)</label>
             <button class="btn tiny ghost" data-action="hide-analytics" aria-label="Close analytics">Close ✕</button>
