@@ -136,6 +136,7 @@ const installBtn = $('#install-btn')
 const installHintOverlay = $('#install-hint-overlay')
 const modeDesc = $('#mode-desc')
 const appEl = $('#app')
+const fullscreenExitBtn = $('#fullscreen-exit')
 const panelToggle = $('#panel-toggle')
 const panelScrim = $('#panel-scrim')
 const systemTip = $('#system-tip')
@@ -157,6 +158,31 @@ function resize() {
   canvas.height = Math.max(1, Math.round(rect.height * dpr))
 }
 window.addEventListener('resize', resize)
+
+// ---- Immersive / fullscreen ----
+// Fill the screen with the visualizer. Uses the Fullscreen API where available,
+// and always applies an "immersive" layout (hide the panel + chrome) so it still
+// works where the API isn't (e.g. iOS Safari). The exit button is CSS-shown while
+// immersive; Esc or clicking it exits.
+function enterFullscreen() {
+  appEl.classList.add('immersive')
+  const el = document.documentElement
+  if (el.requestFullscreen) el.requestFullscreen().catch(() => {})
+  requestAnimationFrame(resize)
+}
+function exitFullscreen() {
+  appEl.classList.remove('immersive')
+  if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {})
+  requestAnimationFrame(resize)
+}
+// If the browser leaves native fullscreen on its own (Esc, its own control), drop
+// the immersive layout too so the two never get out of sync.
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && appEl.classList.contains('immersive')) {
+    appEl.classList.remove('immersive')
+    requestAnimationFrame(resize)
+  }
+})
 
 function ensureEdges() {
   if (engine.ready && !vizEdges) {
@@ -1180,6 +1206,12 @@ document.addEventListener('click', (e) => {
       closeOverlays()
       if (isNarrow()) setPanel(false)
       break
+    case 'enter-fullscreen':
+      enterFullscreen()
+      break
+    case 'exit-fullscreen':
+      exitFullscreen()
+      break
     case 'show-intro':
       introOverlay.hidden = false
       break
@@ -1409,6 +1441,7 @@ window.addEventListener('keydown', (e) => {
   // Escape works everywhere — including from a focused field inside a modal.
   if (e.key === 'Escape') {
     if (typing && t.blur) t.blur()
+    if (appEl.classList.contains('immersive')) { exitFullscreen(); e.preventDefault(); return }
     if (anyOverlayOpen()) { closeOverlays(); e.preventDefault() }
     else if (isNarrow() && !appEl.classList.contains('menu-collapsed')) { setPanel(false); e.preventDefault() }
     return
