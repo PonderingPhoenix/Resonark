@@ -250,6 +250,7 @@ body { overflow: hidden; }
 /* ---- History ---- */
 .history-head { display: flex; align-items: center; justify-content: space-between; }
 .history-head-actions { display: flex; align-items: center; gap: 6px; }
+.history-sub { margin: 4px 0 10px; line-height: 1.4; }
 .history-list { display: flex; flex-direction: column; gap: 10px; }
 .empty { padding: 6px 2px; }
 .card {
