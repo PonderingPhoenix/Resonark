@@ -11,7 +11,8 @@
     <meta name="theme-color" content="#05060a" />
     <title>Resonark · music visualizer & spectral vault</title>
     <meta name="description" content="See your music come alive — then keep how it sounds. A music visualizer and private, local-first spectral vault. No account, nothing leaves your device." />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>%F0%9F%94%8A</text></svg>" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <!-- Social preview. Absolute URLs (on the production domain) so link unfurls
          work across Slack/Discord/iMessage/etc. -->
@@ -34,7 +35,7 @@
 
         <!-- Persistent brand / home button — always visible; returns to the main view. -->
         <button class="brand" data-action="go-home" title="Back to Resonark" aria-label="Back to the main view">
-          <span class="brand-mark">🔊</span>
+          <img class="brand-img" src="icon-192.png" alt="" width="24" height="24" />
           <span class="brand-name">Resonark</span>
         </button>
 
@@ -354,7 +355,7 @@
         <div class="analytics-head">
           <div class="head-left">
             <button class="brand-back" data-action="go-home" title="Back to Resonark" aria-label="Back to the main view">
-              <span class="brand-mark">🔊</span><span class="brand-name">Resonark</span>
+              <img class="brand-img" src="icon-192.png" alt="" width="24" height="24" /><span class="brand-name">Resonark</span>
             </button>
             <h2 id="library-title">🎵 Library</h2>
           </div>
@@ -372,7 +373,7 @@
         <div class="analytics-head">
           <div class="head-left">
             <button class="brand-back" data-action="go-home" title="Back to Resonark" aria-label="Back to the main view">
-              <span class="brand-mark">🔊</span><span class="brand-name">Resonark</span>
+              <img class="brand-img" src="icon-192.png" alt="" width="24" height="24" /><span class="brand-name">Resonark</span>
             </button>
             <h2 id="analytics-title">📊 Vault analytics</h2>
           </div>
