@@ -470,6 +470,7 @@ body { overflow: hidden; }
   background: var(--panel-2); border: 1px solid var(--line);
 }
 .intro-modal .modal-actions { margin-top: 2px; }
+.intro-modal a { color: inherit; text-decoration: underline; }
 
 /* ---- Live / idle listening indicator ---- */
 #source-name.live { color: var(--text); }
